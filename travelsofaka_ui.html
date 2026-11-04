@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TripMate - All 10 Screens Artboard for Figma</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { sans: ['"Plus Jakarta Sans"', 'sans-serif'] },
+          colors: {
+            teal: { 50: '#F0FDFA', 100: '#CCFBF1', 500: '#14B8A6', 600: '#0D9488', 700: '#0F766E' },
+            coral: { 50: '#FFF5F5', 100: '#FFE3E3', 500: '#FF6B6B', 600: '#FA5252' }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body { background-color: #1E293B; padding: 48px; margin: 0; font-family: 'Plus Jakarta Sans', sans-serif; }
+    .artboard-grid { display: flex; flex-direction: row; gap: 48px; width: max-content; align-items: flex-start; }
+    .screen-wrapper { display: flex; flex-direction: column; gap: 12px; }
+    .screen-label { color: #94A3B8; font-size: 14px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; }
+    .phone-screen {
+      width: 390px; height: 844px; background: #F8FAFC; border-radius: 36px;
+      overflow: hidden; display: flex; flex-direction: column; position: relative;
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.4);
+    }
+  </style>
+</head>
+<body class="antialiased text-slate-900">
+
+  <!-- ALL 10 SCREENS SIDE BY SIDE FOR FIGMA IMPORT -->
+  <div class="artboard-grid">
+
+    <!-- ==========================================
+         SCREEN 1: LOGIN / SIGN UP
+         ========================================== -->
+    <div class="screen-wrapper">
+      <span class="screen-label">01. Login / Sign Up</span>
+      <div class="phone-screen bg-white justify-between p-6">
+        <div>
+          <div class="h-8 flex justify-between items-center text-xs font-bold mb-3">
+            <span>9:41</span><span>5G • 100%</span>
+          </div>
+          <div class="relative h-64 rounded-3xl overflow-hidden mb-6">
+            <img src="https://images.unsplash.com/photo-1559592413-7cec4d0cae2b?auto=format&fit=crop&w=800&q=80" class="w-full h-full object-cover" />
+            <div class="absolute inset-0 bg-gradient-to-t from-teal-900/85 via-teal-900/20 to-transparent flex flex-col justify-end p-5 text-white">
+              <span class="bg-coral-500 text-white text-[10px] font-bold px-2.5 py-1 rounded-full w-fit mb-2">STUDENT TRAVEL SQUAD</span>
+              <h1 class="text-3xl font-extrabold">TripMate</h1>
+              <p class="text-xs text-teal-100 mt-0.5">Plan together, split bills easily, travel further.</p>
+            </div>
+          </div>
+          <div class="space-y-3.5">
+            <div>
+              <label class="text-xs font-semibold text-slate-600 block mb-1">University or Personal Email</label>
+              <div class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-2xl text-sm text-slate-800">viet.tran@student.edu.vn</div>
+            </div>
+            <div>
+              <label class="text-xs font-semibold text-slate-600 block mb-1">Password</label>
+              <div class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-2xl text-sm text-slate-800">••••••••••••</div>
+            </div>
+            <button class="w-full py-3 bg-teal-600 text-white font-bold rounded-2xl text-sm shadow-md">Sign In to TripMate</button>
+          </div>
+          <div class="my-5 flex items-center gap-3">
+            <div class="h-px bg-slate-200 flex-1"></div>
+            <span class="text-[11px] text-slate-400 font-bold">OR CONTINUE WITH</span>
+            <div class="h-px bg-slate-200 flex-1"></div>
+          </div>
+          <button class="w-full py-2.5 bg-white border border-slate-200 rounded-2xl font-semibold text-sm flex items-center justify-center gap-2">
+            <span>G</span> Continue with Google
+          </button>
+        </div>
+        <p class="text-center text-xs text-slate-500">New to TripMate? <span class="text-coral-500 font-bold">Create Student Account</span></p>
+      </div>
+    </div>
+
+    <!-- ==========================================
+         SCREEN 2: HOME FEED
+         ========================================== -->
+    <div class="screen-wrapper">
+      <span class="screen-label">02. Home Feed</span>
+      <div class="phone-screen">
+        <div class="bg-white px-5 pt-4 pb-3 flex justify-between items-center border-b border-slate-100">
+          <div class="flex items-center gap-2">
+            <div class="w-8 h-8 rounded-xl bg-teal-600 flex items-center justify-center text-white font-extrabold text-sm">T</div>
+            <span class="font-extrabold text-lg">TripMate</span>
+          </div>
+          <button class="bg-coral-500 text-white text-xs font-bold px-3 py-1.5 rounded-xl">+ Create Post</button>
+        </div>
+        <div class="p-4 space-y-3.5 flex-1 overflow-hidden">
+          <div class="bg-teal-600 text-white p-3.5 rounded-2xl flex justify-between items-center">
+            <div>
+              <span class="text-[10px] uppercase font-bold bg-white/20 px-2 py-0.5 rounded-full">Active Trip • Oct 24–26</span>
+              <h3 class="font-bold text-sm mt-1">Da Nang – Hoi An Summer Squad</h3>
+            </div>
+            <span class="text-xs font-bold">View →</span>
+          </div>
+          <!-- Post Card 1 -->
+          <div class="bg-white rounded-2xl p-3.5 shadow-sm border border-slate-100">
+            <div class="flex items-center justify-between mb-2.5">
+              <div class="flex items-center gap-2">
+                <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100" class="w-8 h-8 rounded-full object-cover" />
+                <div>
+                  <h4 class="text-xs font-bold">Minh Anh</h4>
+                  <span class="text-[10px] text-teal-600 font-semibold">📍 Hoi An Ancient Town</span>
+                </div>
+              </div>
+              <span class="text-[10px] text-slate-400">2h ago</span>
+            </div>
+            <img src="https://images.unsplash.com/photo-1559592413-7cec4d0cae2b?w=600" class="h-40 w-full object-cover rounded-xl mb-2.5" />
+            <p class="text-xs text-slate-700 mb-2.5">Night lantern boat ride with the CS uni squad! Best Cao Lầu & Bánh Mì Phượng 🏮🛶</p>
+            <div class="flex justify-between text-xs text-slate-500 pt-2 border-t border-slate-100 font-semibold">
+              <span class="text-coral-500">♥ 128 Likes</span>
+              <span>💬 14 Comments</span>
+              <span class="text-teal-600">View Place →</span>
+            </div>
+          </div>
+          <!-- Post Card 2 -->
+          <div class="bg-white rounded-2xl p-3.5 shadow-sm border border-slate-100">
+            <div class="flex items-center justify-between mb-2">
+              <div class="flex items-center gap-2">
+                <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100" class="w-8 h-8 rounded-full object-cover" />
+                <div>
+                  <h4 class="text-xs font-bold">Bảo Bảo</h4>
+                  <span class="text-[10px] text-teal-600 font-semibold">📍 Da Lat Pine Hills</span>
+                </div>
+              </div>
+              <span class="text-[10px] text-slate-400">1d ago</span>
+            </div>
+            <img src="https://images.unsplash.com/photo-1583417319070-4a69db38a482?w=600" class="h-32 w-full object-cover rounded-xl mb-2" />
+            <div class="flex justify-between text-xs text-slate-500 font-semibold">
+              <span>♡ 94 Likes</span><span>💬 8 Comments</span>
+            </div>
+          </div>
+        </div>
+        <!-- Bottom Bar -->
+        <div class="h-16 bg-white border-t border-slate-100 px-6 flex justify-between items-center text-[10px] font-bold">
+          <span class="text-teal-600">● Home</span><span class="text-slate-400">Explore</span><span class="text-slate-400">Trips</span><span class="text-slate-400">Profile</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==========================================
+         SCREEN 3: EXPLORE DESTINATIONS
+         ========================================== -->
+    <div class="screen-wrapper">
+      <span class="screen-label">03. Explore</span>
+      <div class="phone-screen">
+        <div class="bg-white p-4 border-b border-slate-100">
+          <h2 class="text-lg font-extrabold mb-2.5">Explore Vietnam 🇻🇳</h2>
+          <div class="w-full px-3.5 py-2.5 bg-slate-100 rounded-2xl text-xs text-slate-400 mb-3">🔍 Search Da Nang, Hoi An, Da Lat...</div>
+          <div class="flex gap-2 text-xs font-bold">
+            <span class="px-3 py-1.5 rounded-full bg-teal-600 text-white">All</span>
+            <span class="px-3 py-1.5 rounded-full bg-slate-100 text-slate-600">🏖️ Beaches</span>
+            <span class="px-3 py-1.5 rounded-full bg-slate-100 text-slate-600">⛰️ Mountains</span>
+          </div>
+        </div>
+        <div class="p-4 space-y-3 flex-1 overflow-hidden">
+          <!-- Card 1 -->
+          <div class="bg-white rounded-2xl overflow-hidden shadow-sm border border-slate-100">
+            <div class="relative h-36">
+              <img src="https://images.unsplash.com/photo-1559592413-7cec4d0cae2b?w=600" class="w-full h-full object-cover" />
+              <span class="absolute bottom-2 right-2 bg-teal-600 text-white text-[10px] font-bold px-2.5 py-1 rounded-full">850,000 VND/day</span>
+            </div>
+            <div class="p-3 flex justify-between items-center">
+              <div>
+                <h3 class="text-sm font-extrabold">Da Nang Coastal City</h3>
+                <p class="text-[11px] text-slate-500">My Khe Beach & Son Tra Peninsula</p>
+              </div>
+              <span class="text-xs font-extrabold text-amber-500">★ 4.9</span>
+            </div>
+          </div>
+          <!-- Card 2 -->
+          <div class="bg-white rounded-2xl overflow-hidden shadow-sm border border-slate-100">
+            <div class="relative h-36">
+              <img src="https://images.unsplash.com/photo-1540611025311-01df3cef54b5?w=600" class="w-full h-full object-cover" />
+              <span class="absolute bottom-2 right-2 bg-teal-600 text-white text-[10px] font-bold px-2.5 py-1 rounded-full">650,000 VND/day</span>
+            </div>
+            <div class="p-3 flex justify-between items-center">
+              <div>
+                <h3 class="text-sm font-extrabold">Hoi An Ancient Town</h3>
+                <p class="text-[11px] text-slate-500">Quang Nam • Lantern Heritage</p>
+              </div>
+              <span class="text-xs font-extrabold text-amber-500">★ 4.9</span>
+            </div>
+          </div>
+          <!-- Card 3 -->
+          <div class="bg-white rounded-2xl overflow-hidden shadow-sm border border-slate-100">
+            <div class="relative h-28">
+              <img src="https://images.unsplash.com/photo-1528127269322-539801943592?w=600" class="w-full h-full object-cover" />
+            </div>
+            <div class="p-3 flex justify-between items-center">
+              <h3 class="text-sm font-extrabold">Ha Long Bay</h3>
+              <span class="text-xs font-extrabold text-amber-500">★ 4.9</span>
+            </div>
+          </div>
+        </div>
+        <div class="h-16 bg-white border-t border-slate-100 px-6 flex justify-between items-center text-[10px] font-bold">
+          <span class="text-slate-400">Home</span><span class="text-teal-600">● Explore</span><span class="text-slate-400">Trips</span><span class="text-slate-400">Profile</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==========================================
+         SCREEN 4: DESTINATION DETAILS
+         ========================================== -->
+    <div class="screen-wrapper">
+      <span class="screen-label">04. Destination Details</span>
+      <div class="phone-screen bg-white justify-between">
+        <div>
+          <div class="relative h-64">
+            <img src="https://images.unsplash.com/photo-1559592413-7cec4d0cae2b?w=800" class="w-full h-full object-cover" />
+            <div class="absolute inset-0 bg-gradient-to-t from-black/75 via-transparent to-transparent"></div>
+            <div class="absolute top-4 left-4 right-4 flex justify-between">
+              <span class="w-9 h-9 rounded-full bg-white flex items-center justify-center font-bold text-xs shadow">←</span>
+              <span class="w-9 h-9 rounded-full bg-coral-500 text-white flex items-center justify-center font-bold text-xs shadow">♥</span>
+            </div>
+            <div class="absolute bottom-4 left-4 right-4 text-white">
+              <span class="bg-coral-500 text-[10px] font-bold uppercase px-2.5 py-1 rounded-full">Central Vietnam</span>
+              <h1 class="text-2xl font-extrabold mt-1">Da Nang Coastal City</h1>
+              <p class="text-xs text-slate-200">📍 My Khe Beach & Son Tra Peninsula</p>
+            </div>
+          </div>
+          <div class="p-5 space-y-4">
+            <div class="grid grid-cols-3 gap-2 bg-slate-50 p-3 rounded-2xl border border-slate-100 text-center">
+              <div><span class="text-[10px] text-slate-400 font-bold block">EST. BUDGET</span><span class="text-xs font-extrabold text-teal-600">850k VND/day</span></div>
+              <div><span class="text-[10px] text-slate-400 font-bold block">RATING</span><span class="text-xs font-extrabold text-amber-500">★ 4.9 (420)</span></div>
+              <div><span class="text-[10px] text-slate-400 font-bold block">DURATION</span><span class="text-xs font-extrabold">3–4 Days</span></div>
+            </div>
+            <div>
+              <h3 class="text-sm font-bold mb-1">About Destination</h3>
+              <p class="text-xs text-slate-600 leading-relaxed">Famous for My Khe white-sand beach, vibrant night markets, Dragon Bridge fire show, and budget-friendly student seafood spots.</p>
+            </div>
+            <div>
+              <h3 class="text-sm font-bold mb-2">Student Reviews (28)</h3>
+              <div class="p-3 rounded-2xl bg-slate-50 border border-slate-100 text-xs">
+                <div class="flex justify-between font-bold mb-1"><span>Thu Thảo • VKU</span><span class="text-amber-500">★★★★★</span></div>
+                <p class="text-slate-600">Rent scooters for 120k VND/day and ride up Son Tra Peninsula before sunset!</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="p-4 border-t border-slate-100 flex items-center justify-between bg-white">
+          <div>
+            <span class="text-[10px] text-slate-400 font-bold block">SAVED TO BOOKMARKS</span>
+            <span class="text-sm font-extrabold">Ready to plan?</span>
+          </div>
+          <button class="bg-coral-500 text-white font-bold text-xs px-5 py-3 rounded-2xl shadow-md">+ Add to Trip</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==========================================
+         SCREEN 5: TRIP PLANNER
+         ========================================== -->
+    <div class="screen-wrapper">
+      <span class="screen-label">05. Trip Planner</span>
+      <div class="phone-screen">
+        <div class="bg-white p-4 border-b border-slate-100 flex justify-between items-center">
+          <span class="text-xs font-bold">← Back</span>
+          <h2 class="text-sm font-extrabold">Trip Planner</h2>
+          <span class="text-xs font-bold text-teal-600">Save</span>
+        </div>
+        <div class="p-4 space-y-3.5 flex-1">
+          <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 space-y-3">
+            <div>
+              <label class="text-[10px] font-bold text-slate-400 uppercase">Trip Title</label>
+              <div class="mt-1 font-bold text-sm bg-slate-50 border border-slate-200 rounded-xl px-3 py-2">Da Nang – Hoi An Summer Squad</div>
+            </div>
+            <div class="grid grid-cols-2 gap-2">
+              <div class="bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs font-semibold">📅 Oct 24 – Oct 26</div>
+              <div class="bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs font-bold text-teal-600">💰 6,000,000 VND</div>
+            </div>
+            <div class="flex gap-1.5 flex-wrap">
+              <span class="text-xs font-semibold bg-teal-50 text-teal-700 px-2.5 py-1 rounded-full">📍 Da Nang</span>
+              <span class="text-xs font-semibold bg-teal-50 text-teal-700 px-2.5 py-1 rounded-full">📍 Hoi An</span>
+            </div>
+          </div>
+
+          <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 space-y-2.5">
+            <div class="flex gap-2 mb-2">
+              <span class="flex-1 py-1.5 text-center rounded-xl text-xs font-bold bg-teal-600 text-white">Day 1</span>
+              <span class="flex-1 py-1.5 text-center rounded-xl text-xs font-bold bg-slate-100 text-slate-600">Day 2</span>
+              <span class="flex-1 py-1.5 text-center rounded-xl text-xs font-bold bg-slate-100 text-slate-600">Day 3</span>
+            </div>
+            <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-100 text-xs font-semibold">09:00 AM — Arrive in Da Nang & Beach Coffee</div>
+            <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-100 text-xs font-semibold">04:30 PM — Son Tra Peninsula Scooter Ride</div>
+            <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-100 text-xs font-semibold">07:30 PM — Helio Night Market Seafood</div>
+            <div class="p-2.5 rounded-xl border border-dashed border-teal-500 text-xs font-bold text-teal-600 text-center">+ Add Activity to Day 1</div>
+          </div>
+
+          <button class="w-full py-3.5 bg-coral-500 text-white font-bold text-xs rounded-2xl shadow-md">Open Trip Itinerary Dashboard →</button>
+        </div>
+        <div class="h-16 bg-white border-t border-slate-100 px-6 flex justify-between items-center text-[10px] font-bold">
+          <span class="text-slate-400">Home</span><span class="text-slate-400">Explore</span><span class="text-teal-600">● Trips</span><span class="text-slate-400">Profile</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==========================================
+         SCREEN 6: TRIP DETAILS & EXPENSE SUMMARY
+         ========================================== -->
+    <div class="screen-wrapper">
+      <span class="screen-label">06. Trip Details</span>
+      <div class="phone-screen">
+        <div class="relative h-40">
+          <img src="https://images.unsplash.com/photo-1559592413-7cec4d0cae2b?w=800" class="w-full h-full object-cover" />
+          <div class="absolute inset-0 bg-gradient-to-t from-slate-900/85 to-transparent p-4 flex flex-col justify-between text-white">
+            <div class="flex justify-between">
+              <span class="text-xs bg-white/20 px-2.5 py-1 rounded-full font-semibold">← Edit Plan</span>
+              <span class="text-xs bg-teal-500 px-3 py-1 rounded-full font-bold">🔗 Share Trip</span>
+            </div>
+            <div>
+              <h2 class="text-base font-extrabold">Da Nang – Hoi An Summer Squad</h2>
+              <p class="text-xs text-slate-200">Oct 24 – Oct 26 • 4 Friends Joined</p>
+            </div>
+          </div>
+        </div>
+        <div class="p-4 space-y-3.5 flex-1">
+          <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100">
+            <div class="flex justify-between items-start mb-2">
+              <div>
+                <span class="text-[10px] font-bold text-slate-400">GROUP EXPENSE SUMMARY</span>
+                <h3 class="text-lg font-extrabold">2,635,000 VND</h3>
+                <span class="text-[11px] text-slate-500">of 6,000,000 VND budget</span>
+              </div>
+              <button class="bg-coral-500 text-white text-xs font-bold px-3 py-2 rounded-xl">📷 Scan Receipt</button>
+            </div>
+            <div class="w-full h-2 bg-slate-100 rounded-full overflow-hidden mb-3">
+              <div class="h-full bg-teal-600 w-5/12"></div>
+            </div>
+            <div class="space-y-2 pt-2 border-t border-slate-100 text-xs">
+              <div class="flex justify-between">
+                <span class="font-bold">🧾 Cộng Cà Phê (OCR)</span>
+                <span class="font-extrabold text-teal-600">185,000 VND</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="font-bold">🏡 An Bang Homestay</span>
+                <span class="font-extrabold">1,800,000 VND</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="font-bold">🛵 Motorbike Rentals</span>
+                <span class="font-extrabold">650,000 VND</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 text-xs space-y-2">
+            <h3 class="text-sm font-bold">Daily Schedule</h3>
+            <p class="text-teal-600 font-bold">DAY 1 • DA NANG</p>
+            <p class="text-slate-700 font-semibold">09:00 AM — My Khe Beach & Specialty Coffee</p>
+            <p class="text-coral-500 font-bold pt-1">DAY 2 • HOI AN</p>
+            <p class="text-slate-700 font-semibold">07:00 PM — Ancient Town Lantern Boat</p>
+          </div>
+        </div>
+        <div class="h-16 bg-white border-t border-slate-100 px-6 flex justify-between items-center text-[10px] font-bold">
+          <span class="text-slate-400">Home</span><span class="text-slate-400">Explore</span><span class="text-teal-600">● Trips</span><span class="text-slate-400">Profile</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==========================================
+         SCREEN 7: RECEIPT SCANNER (OCR)
+         ========================================== -->
+    <div class="screen-wrapper">
+      <span class="screen-label">07. Receipt Scanner</span>
+      <div class="phone-screen bg-slate-950 text-white justify-between p-5">
+        <div class="flex justify-between items-center">
+          <span class="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-xs">✕</span>
+          <span class="text-xs font-bold uppercase bg-teal-500/20 text-teal-300 px-3 py-1 rounded-full">AI Receipt OCR</span>
+          <span class="w-8"></span>
+        </div>
+        <div class="my-auto mx-auto w-full h-96 rounded-3xl border-2 border-teal-400 bg-slate-900 flex items-center justify-center relative">
+          <div class="bg-amber-50 text-slate-800 w-56 p-4 rounded-lg shadow-xl font-mono text-[11px] space-y-1.5">
+            <p class="font-bold text-center text-xs border-b border-dashed border-slate-400 pb-1">CỘNG CÀ PHÊ</p>
+            <p class="text-[10px] text-center text-slate-500">98 Bạch Đằng, Đà Nẵng</p>
+            <p class="text-[10px] text-slate-500">Date: 24/10/2026</p>
+            <div class="border-y border-dashed border-slate-400 py-1.5 space-y-1">
+              <div class="flex justify-between"><span>3x Cốt Dừa Cà Phê</span><span>165,000</span></div>
+              <div class="flex justify-between"><span>1x Hướng Dương</span><span>20,000</span></div>
+            </div>
+            <div class="flex justify-between font-bold text-xs pt-1">
+              <span>TOTAL:</span><span>185,000 VND</span>
+            </div>
+          </div>
+        </div>
+        <div class="space-y-3">
+          <div class="bg-white/10 rounded-2xl p-3 text-center text-xs text-slate-200">
+            💡 <strong class="text-teal-300">OCR Explanation:</strong> Automatically extracts merchant, date, and amount from receipt text.
+          </div>
+          <button class="w-full py-3.5 bg-coral-500 text-white font-extrabold text-sm rounded-2xl shadow-lg">📷 Scan Receipt</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==========================================
+         SCREEN 8: OCR REVIEW
+         ========================================== -->
+    <div class="screen-wrapper">
+      <span class="screen-label">08. OCR Review</span>
+      <div class="phone-screen">
+        <div class="bg-white p-4 border-b border-slate-100 flex justify-between items-center">
+          <span class="text-xs font-bold">← Retake</span>
+          <h2 class="text-sm font-extrabold">OCR Expense Review</h2>
+          <span class="text-[10px] font-bold bg-teal-50 text-teal-700 px-2 py-1 rounded">Verified</span>
+        </div>
+        <div class="p-4 space-y-4 flex-1">
+          <div class="bg-teal-50 border border-teal-200 p-3 rounded-2xl text-xs text-teal-800">
+            ✓ Extracted from receipt photo. Review or edit fields before saving.
+          </div>
+          <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 space-y-3.5">
+            <div>
+              <label class="text-[10px] font-bold text-slate-400 uppercase">Merchant Name</label>
+              <div class="mt-1 text-xs font-bold bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5">Cộng Cà Phê - Bạch Đằng, Da Nang</div>
+            </div>
+            <div class="grid grid-cols-2 gap-2.5">
+              <div>
+                <label class="text-[10px] font-bold text-slate-400 uppercase">Date</label>
+                <div class="mt-1 text-xs font-semibold bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5">Oct 24, 2026</div>
+              </div>
+              <div>
+                <label class="text-[10px] font-bold text-slate-400 uppercase">Amount</label>
+                <div class="mt-1 text-xs font-extrabold text-teal-600 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5">185,000 VND</div>
+              </div>
+            </div>
+            <div>
+              <label class="text-[10px] font-bold text-slate-400 uppercase">Expense Category</label>
+              <div class="mt-1 text-xs font-semibold bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5">☕ Food & Drink ▾</div>
+            </div>
+            <div>
+              <label class="text-[10px] font-bold text-slate-400 uppercase block mb-1.5">Split With Friends</label>
+              <div class="flex gap-1.5 text-xs font-semibold">
+                <span class="px-2.5 py-1 rounded-full bg-teal-50 text-teal-700">✓ Việt</span>
+                <span class="px-2.5 py-1 rounded-full bg-teal-50 text-teal-700">✓ Minh Anh</span>
+                <span class="px-2.5 py-1 rounded-full bg-teal-50 text-teal-700">✓ Bảo</span>
+              </div>
+            </div>
+          </div>
+          <button class="w-full py-3.5 bg-teal-600 text-white font-bold text-xs rounded-2xl shadow-md">Save Expense to Trip</button>
+        </div>
+        <div class="h-16 bg-white border-t border-slate-100 px-6 flex justify-between items-center text-[10px] font-bold">
+          <span class="text-slate-400">Home</span><span class="text-slate-400">Explore</span><span class="text-teal-600">● Trips</span><span class="text-slate-400">Profile</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==========================================
+         SCREEN 9: CREATE POST
+         ========================================== -->
+    <div class="screen-wrapper">
+      <span class="screen-label">09. Create Post</span>
+      <div class="phone-screen">
+        <div class="bg-white p-4 border-b border-slate-100 flex justify-between items-center">
+          <span class="text-xs text-slate-500 font-semibold">Cancel</span>
+          <h2 class="text-sm font-extrabold">Create Travel Post</h2>
+          <span class="text-xs font-bold text-white bg-coral-500 px-3 py-1.5 rounded-xl">Publish</span>
+        </div>
+        <div class="p-4 space-y-4 flex-1">
+          <img src="https://images.unsplash.com/photo-1528127269322-539801943592?w=600" class="h-44 w-full object-cover rounded-2xl shadow-sm" />
+          <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 space-y-3">
+            <div>
+              <label class="text-[10px] font-bold text-slate-400 uppercase">Destination Tag</label>
+              <div class="mt-1 text-xs font-bold text-teal-600 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5">📍 Ha Long Bay, Quang Ninh</div>
+            </div>
+            <div>
+              <label class="text-[10px] font-bold text-slate-400 uppercase">Caption</label>
+              <div class="mt-1 text-xs text-slate-700 bg-slate-50 border border-slate-200 rounded-xl p-3 leading-relaxed">
+                Kayaking through emerald limestone waters in Ha Long Bay with the uni squad! Student boat tour was only 450k VND each 🛶⛰️✨
+              </div>
+            </div>
+          </div>
+          <button class="w-full py-3.5 bg-coral-500 text-white font-bold text-xs rounded-2xl shadow-md">Publish Travel Post</button>
+        </div>
+        <div class="h-16 bg-white border-t border-slate-100 px-6 flex justify-between items-center text-[10px] font-bold">
+          <span class="text-teal-600">● Home</span><span class="text-slate-400">Explore</span><span class="text-slate-400">Trips</span><span class="text-slate-400">Profile</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==========================================
+         SCREEN 10: USER PROFILE
+         ========================================== -->
+    <div class="screen-wrapper">
+      <span class="screen-label">10. User Profile</span>
+      <div class="phone-screen">
+        <div class="bg-white p-5 border-b border-slate-100">
+          <div class="flex items-center gap-3.5 mb-3">
+            <img src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=160" class="w-14 h-14 rounded-full object-cover ring-4 ring-teal-500/20" />
+            <div>
+              <h2 class="text-base font-extrabold">Trần Quang Việt</h2>
+              <p class="text-xs text-slate-500">@viet.travels • Senior CS Student</p>
+              <span class="inline-block mt-1 text-[10px] font-bold bg-teal-50 text-teal-700 px-2 py-0.5 rounded-full">📍 Da Nang, Vietnam</span>
+            </div>
+          </div>
+          <p class="text-xs text-slate-600">Exploring Vietnam with friends 📸 | Coffee & cloud hunting enthusiast ☕⛰️</p>
+          <div class="grid grid-cols-3 gap-2 mt-3 pt-3 border-t border-slate-100 text-center">
+            <div><span class="text-sm font-extrabold block">12</span><span class="text-[10px] text-slate-400 font-bold">TRIPS</span></div>
+            <div><span class="text-sm font-extrabold block">8</span><span class="text-[10px] text-slate-400 font-bold">SAVED</span></div>
+            <div><span class="text-sm font-extrabold block">348</span><span class="text-[10px] text-slate-400 font-bold">FRIENDS</span></div>
+          </div>
+        </div>
+        <div class="p-4 flex-1 space-y-3">
+          <div class="flex bg-slate-200/70 p-1 rounded-xl text-xs font-bold text-center">
+            <span class="flex-1 py-1.5 rounded-lg bg-white shadow-sm">Posts</span>
+            <span class="flex-1 py-1.5 text-slate-600">Saved</span>
+            <span class="flex-1 py-1.5 text-slate-600">History</span>
+          </div>
+          <div class="grid grid-cols-2 gap-2.5">
+            <img src="https://images.unsplash.com/photo-1559592413-7cec4d0cae2b?w=400" class="h-32 w-full object-cover rounded-2xl" />
+            <img src="https://images.unsplash.com/photo-1583417319070-4a69db38a482?w=400" class="h-32 w-full object-cover rounded-2xl" />
+            <img src="https://images.unsplash.com/photo-1528127269322-539801943592?w=400" class="h-32 w-full object-cover rounded-2xl" />
+            <img src="https://images.unsplash.com/photo-1540611025311-01df3cef54b5?w=400" class="h-32 w-full object-cover rounded-2xl" />
+          </div>
+        </div>
+        <div class="h-16 bg-white border-t border-slate-100 px-6 flex justify-between items-center text-[10px] font-bold">
+          <span class="text-slate-400">Home</span><span class="text-slate-400">Explore</span><span class="text-slate-400">Trips</span><span class="text-teal-600">● Profile</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+</body>
+</html>

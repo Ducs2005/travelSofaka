@@ -8,10 +8,10 @@
 
 | STT | Họ và tên | Mã sinh viên | Nhiệm vụ |
 |:---:|---|---|---|
-| 1 | Phạm Ngọc Đức |  |  |
-| 2 | Trần Quang Việt |  |  |
-| 3 | Lê Hữu Anh Tú |  |  |
-| 4 | Nguyễn Tùng Lâm |  |  |
+| 1 | Phạm Ngọc Đức |  | **Trưởng nhóm (Team Lead) & AI Travel Planning:** Điều phối tiến độ chung; phụ trách Module Khám phá điểm đến (Screen 03, 04) & Lập kế hoạch du lịch AI (Screen 05); tích hợp LLM API sinh lịch trình tự động. |
+| 2 | Trần Quang Việt |  | **Kiến trúc cốt lõi (Core Architect) & Auth/Profile:** Xây dựng khung kiến trúc dự án (Clean Architecture, Navigation, Theme MD3); phụ trách Module Xác thực (Screen 01) & Hồ sơ cá nhân (Screen 10); thiết lập CI/CD & Fastlane. |
+| 3 | Lê Hữu Anh Tú |  | **Quản lý chi phí & AI OCR:** Phụ trách Module Quản lý chi phí nhóm & chia bill (Screen 06); tích hợp Google ML Kit nhận diện hóa đơn (Screen 07) và form bóc tách thông tin OCR (Screen 08). |
+| 4 | Nguyễn Tùng Lâm |  | **Mạng xã hội & Đồng bộ ngoại tuyến:** Phụ trách Module Mạng xã hội du lịch (Screen 02, 09); lưu trữ ảnh Firebase Storage; thiết kế CSDL cục bộ SQLite và Engine đồng bộ ngoại tuyến (Offline-First). |
 
 ---
 
