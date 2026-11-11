@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { TripPlan } from '@/domain/entities/trip';
 import { Activity } from '@/domain/entities/activity';
+import { generateGeminiItinerary } from '@/data/datasources/remote/ai/gemini_itinerary';
 
 interface TripState {
   activeTrip: TripPlan | null;
@@ -12,6 +13,8 @@ interface TripState {
   setActiveTrip: (trip: TripPlan | null) => void;
   setSelectedDayIndex: (index: number) => void;
   addActivity: (activity: Activity) => void;
+  generateItinerary: (destination: string, days: number, budget: number, preferences: string) => Promise<void>;
+  updateTrip: (updates: Partial<TripPlan>) => void;
 }
 
 export const useTripStore = create<TripState>((set) => ({
@@ -83,4 +86,32 @@ export const useTripStore = create<TripState>((set) => ({
         },
       };
     }),
+  generateItinerary: async (destination, days, budget, preferences) => {
+    set({ isLoading: true });
+    try {
+      const activities = await generateGeminiItinerary(destination, days, budget, preferences);
+      set((state) => {
+        const tripId = state.activeTrip?.id ?? `trip_${Date.now()}`;
+        const trip: TripPlan = {
+          id: tripId,
+          creatorUid: 'user_duc_pham',
+          title: `${days}-day trip to ${destination}`,
+          destinations: [destination],
+          startDate: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+          endDate: new Date(Date.now() + (days - 1) * 86400000).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+          budgetTotal: budget,
+          spentTotal: state.activeTrip?.spentTotal ?? 0,
+          joinedMemberUids: state.activeTrip?.joinedMemberUids ?? ['user_duc_pham'],
+          activities: activities.map((activity) => ({ ...activity, tripId })),
+          isActive: true,
+          isSynced: false,
+          createdAt: Date.now(),
+        };
+        return { activeTrip: trip, trips: [trip, ...state.trips.filter((item) => item.id !== trip.id)], selectedDayIndex: 1 };
+      });
+    } finally {
+      set({ isLoading: false });
+    }
+  },
+  updateTrip: (updates) => set((state) => state.activeTrip ? { activeTrip: { ...state.activeTrip, ...updates } } : state),
 }));
