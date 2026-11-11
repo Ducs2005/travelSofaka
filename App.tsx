@@ -4,642 +4,383 @@ import {
   Text,
   ScrollView,
   StyleSheet,
-  TouchableOpacity,
   Image,
+  TouchableOpacity,
+  TextInput,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { palette, typography, radii, spacing, shadows } from '@/core/theme';
+import { Badge, Card } from '@/presentation/components/common';
+import { BottomNavBar, BottomNavTab } from '@/presentation/components/common/BottomNavBar';
 import {
-  palette,
-  typography,
-  radii,
-  spacing,
-  shadows,
-} from '@/core/theme';
+  PinIcon,
+  HeartIcon,
+  CalendarIcon,
+  WalletIcon,
+} from '@/presentation/components/common/MonochromeIcons';
+import { useAuthStore } from '@/presentation/stores/authStore';
 import {
-  Button,
-  Card,
-  Input,
-  Badge,
-  ScreenContainer,
-} from '@/presentation/components/common';
-import {
-  useAuthStore,
-  useTripStore,
-  useExpenseStore,
-  useSocialStore,
-} from '@/presentation/stores';
+  HomeFeedScreen,
+  TripDetailsExpenseScreen,
+  ReceiptScannerScreen,
+  OCRExpenseReviewScreen,
+  TripPlannerScreen,
+} from '@/presentation/screens';
 
-type TabView = 'overview' | 'auth' | 'trip' | 'expense' | 'profile';
+type TripsSubView = 'details' | 'planner' | 'scanner' | 'review';
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState<TabView>('overview');
+  const [currentTab, setCurrentTab] = useState<BottomNavTab>('trips');
+  const [tripsView, setTripsView] = useState<TripsSubView>('details');
 
   const { user } = useAuthStore();
-  const { activeTrip, selectedDayIndex, setSelectedDayIndex } = useTripStore();
-  const { expenses, totalBudget, totalSpent } = useExpenseStore();
-  const { posts } = useSocialStore();
+
+  const handleNavTabPress = (tab: BottomNavTab) => {
+    setCurrentTab(tab);
+    if (tab === 'trips') {
+      setTripsView('details');
+    }
+  };
 
   return (
-    <ScreenContainer backgroundColor={palette.slate[800]} isDark>
-      <StatusBar style="light" />
+    <SafeAreaProvider>
+      <View style={styles.appContainer}>
+        <StatusBar style="dark" />
 
-      {/* Top Brand Bar */}
-      <View style={styles.topBrandBar}>
-        <View style={styles.brandContainer}>
-          <View style={styles.logoBadge}>
-            <Text style={styles.logoText}>T</Text>
-          </View>
-          <View>
-            <Text style={styles.brandTitle}>TripMate</Text>
-            <Text style={styles.brandSubtitle}>Clean Architecture & Theme Preview</Text>
-          </View>
-        </View>
-        <Badge label="MVP READY" variant="coral" />
-      </View>
+      {/* 1. HOME TAB */}
+      {currentTab === 'home' && (
+        <HomeFeedScreen
+          onViewActiveTrip={() => {
+            setCurrentTab('trips');
+            setTripsView('details');
+          }}
+          onNavTabPress={handleNavTabPress}
+        />
+      )}
 
-      {/* Screen Selector Tabs */}
-      <View style={styles.tabContainer}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.tabScroll}>
-          {(
-            [
-              { id: 'overview', label: '🎨 Theme & Core' },
-              { id: 'auth', label: '01. Login' },
-              { id: 'trip', label: '05. Planner' },
-              { id: 'expense', label: '06. Expense' },
-              { id: 'profile', label: '10. Profile' },
-            ] as const
-          ).map((tab) => {
-            const isActive = activeTab === tab.id;
-            return (
-              <TouchableOpacity
-                key={tab.id}
-                onPress={() => setActiveTab(tab.id)}
-                style={[styles.tabButton, isActive && styles.tabButtonActive]}
-              >
-                <Text style={[styles.tabButtonText, isActive && styles.tabButtonTextActive]}>
-                  {tab.label}
-                </Text>
-              </TouchableOpacity>
-            );
-          })}
-        </ScrollView>
-      </View>
-
-      {/* Content Area styled like the 390px artboard in travelsofaka_ui.html */}
-      <View style={styles.phoneFrame}>
-        <ScrollView style={styles.screenScroll} contentContainerStyle={styles.scrollContent}>
-          {/* TAB 1: THEME & CLEAN ARCHITECTURE OVERVIEW */}
-          {activeTab === 'overview' && (
-            <View style={styles.sectionContainer}>
-              <Card style={styles.cardItem}>
-                <Badge label="CLEAN ARCHITECTURE READY" variant="teal" style={{ marginBottom: spacing.md }} />
-                <Text style={styles.headline}>Travelsofaka Core System</Text>
-                <Text style={styles.bodyText}>
-                  Codebase đã hoàn tất cấu trúc 3 lớp: Domain, Data, Presentation với hệ thống màu và typography chuẩn theo prototype.
-                </Text>
-              </Card>
-
-              {/* Color Palette Visualizer */}
-              <Card style={styles.cardItem}>
-                <Text style={styles.cardTitle}>Bảng màu chủ đạo (Brand Palette)</Text>
-                <View style={styles.paletteRow}>
-                  <View style={[styles.colorBox, { backgroundColor: palette.teal[600] }]}>
-                    <Text style={styles.colorTextLight}>Teal 600</Text>
-                    <Text style={styles.colorHexLight}>#0D9488</Text>
-                  </View>
-                  <View style={[styles.colorBox, { backgroundColor: palette.coral[500] }]}>
-                    <Text style={styles.colorTextLight}>Coral 500</Text>
-                    <Text style={styles.colorHexLight}>#FF6B6B</Text>
-                  </View>
-                  <View style={[styles.colorBox, { backgroundColor: palette.slate[900] }]}>
-                    <Text style={styles.colorTextLight}>Slate 900</Text>
-                    <Text style={styles.colorHexLight}>#0F172A</Text>
-                  </View>
-                  <View style={[styles.colorBox, { backgroundColor: palette.amber[500] }]}>
-                    <Text style={styles.colorTextLight}>Amber 500</Text>
-                    <Text style={styles.colorHexLight}>#F59E0B</Text>
-                  </View>
-                </View>
-              </Card>
-
-              {/* UI Component Showcase */}
-              <Card style={styles.cardItem}>
-                <Text style={styles.cardTitle}>Common UI Components</Text>
-                <View style={{ gap: spacing.base }}>
-                  <Button title="Primary Button (Teal 600)" variant="primary" />
-                  <Button title="Action Button (Coral 500)" variant="secondary" />
-                  <Button title="Outline Button" variant="outline" />
-                  <View style={styles.badgeRow}>
-                    <Badge label="Active Trip" variant="teal" />
-                    <Badge label="OCR Verified" variant="teal" />
-                    <Badge label="★ 4.9 Rating" variant="amber" />
-                    <Badge label="Student Squad" variant="coral" />
-                  </View>
-                </View>
-              </Card>
+      {/* 2. EXPLORE TAB */}
+      {currentTab === 'explore' && (
+        <View style={styles.tabScreenContainer}>
+          <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false}>
+            <View style={styles.exploreHeader}>
+              <Text style={styles.exploreTitle}>Explore Destinations</Text>
+              <Text style={styles.exploreSubtitle}>Find student-friendly spots in Vietnam</Text>
+              <View style={styles.searchBar}>
+                <Text style={styles.searchIcon}>🔍</Text>
+                <TextInput
+                  placeholder="Search beaches, mountains, cafes..."
+                  placeholderTextColor="#94A3B8"
+                  style={styles.searchInput}
+                />
+              </View>
             </View>
-          )}
 
-          {/* TAB 2: SCREEN 01 LOGIN PREVIEW */}
-          {activeTab === 'auth' && (
-            <View style={styles.sectionContainer}>
-              <View style={styles.heroImageWrapper}>
+            <View style={styles.exploreContent}>
+              <View style={styles.destinationCard}>
                 <Image
-                  source={{ uri: 'https://images.unsplash.com/photo-1559592413-7cec4d0cae2b?w=800' }}
-                  style={styles.heroImage}
+                  source={{
+                    uri: 'https://images.unsplash.com/photo-1559592413-7cec4d0cae2b?w=800',
+                  }}
+                  style={styles.destImage}
                 />
-                <View style={styles.heroOverlay}>
-                  <Badge label="STUDENT TRAVEL SQUAD" variant="coral" style={{ marginBottom: 6 }} />
-                  <Text style={styles.heroTitle}>TripMate</Text>
-                  <Text style={styles.heroSubtitle}>Plan together, split bills easily, travel further.</Text>
+                <View style={styles.destCardBody}>
+                  <View style={styles.destCardTop}>
+                    <Text style={styles.destName}>My Khe Beach & Son Tra</Text>
+                    <Text style={styles.destPrice}>~450k / day</Text>
+                  </View>
+                  <View style={styles.destLocationRow}>
+                    <PinIcon size={13} color="#0D9488" />
+                    <Text style={styles.destLocationText}>Da Nang City</Text>
+                  </View>
                 </View>
               </View>
 
-              <Card style={styles.cardItem}>
-                <Input
-                  label="University or Personal Email"
-                  defaultValue="viet.tran@student.edu.vn"
-                  placeholder="name@student.edu.vn"
+              <View style={styles.destinationCard}>
+                <Image
+                  source={{
+                    uri: 'https://images.unsplash.com/photo-1506973035872-a4ec16b8e8d9?w=800',
+                  }}
+                  style={styles.destImage}
                 />
-                <Input
-                  label="Password"
-                  defaultValue="••••••••••••"
-                  placeholder="Enter password"
-                  secureTextEntry
-                />
-                <Button title="Sign In to TripMate" variant="primary" style={{ marginTop: spacing.xs }} />
-
-                <View style={styles.dividerRow}>
-                  <View style={styles.dividerLine} />
-                  <Text style={styles.dividerText}>OR CONTINUE WITH</Text>
-                  <View style={styles.dividerLine} />
+                <View style={styles.destCardBody}>
+                  <View style={styles.destCardTop}>
+                    <Text style={styles.destName}>Hoi An Ancient Lantern Town</Text>
+                    <Text style={styles.destPrice}>~600k / day</Text>
+                  </View>
+                  <View style={styles.destLocationRow}>
+                    <PinIcon size={13} color="#0D9488" />
+                    <Text style={styles.destLocationText}>Quang Nam Province</Text>
+                  </View>
                 </View>
-
-                <Button title="Continue with Google" variant="outline" />
-              </Card>
-            </View>
-          )}
-
-          {/* TAB 3: SCREEN 05 TRIP PLANNER PREVIEW */}
-          {activeTab === 'trip' && activeTrip && (
-            <View style={styles.sectionContainer}>
-              <Card style={styles.cardItem}>
-                <Text style={styles.metaLabel}>ACTIVE TRIP</Text>
-                <Text style={styles.cardTitle}>{activeTrip.title}</Text>
-                <View style={styles.tripMetaRow}>
-                  <Text style={styles.tagText}>📅 {activeTrip.startDate} – {activeTrip.endDate}</Text>
-                  <Text style={[styles.tagText, { color: palette.teal[700], fontWeight: 'bold' }]}>
-                    💰 {activeTrip.budgetTotal.toLocaleString()} VND
-                  </Text>
-                </View>
-                <View style={styles.badgeRow}>
-                  {activeTrip.destinations.map((d) => (
-                    <Badge key={d} label={`📍 ${d}`} variant="teal" />
-                  ))}
-                </View>
-              </Card>
-
-              {/* Day Tabs */}
-              <View style={styles.daySelector}>
-                {[1, 2, 3].map((day) => (
-                  <TouchableOpacity
-                    key={day}
-                    onPress={() => setSelectedDayIndex(day)}
-                    style={[
-                      styles.dayButton,
-                      selectedDayIndex === day && styles.dayButtonActive,
-                    ]}
-                  >
-                    <Text
-                      style={[
-                        styles.dayButtonText,
-                        selectedDayIndex === day && styles.dayButtonTextActive,
-                      ]}
-                    >
-                      Day {day}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
               </View>
-
-              {/* Day Activities */}
-              <Card style={styles.cardItem}>
-                <Text style={styles.cardTitle}>Daily Schedule (Day {selectedDayIndex})</Text>
-                {activeTrip.activities
-                  .filter((a) => a.dayIndex === selectedDayIndex)
-                  .map((act) => (
-                    <View key={act.id} style={styles.activityItem}>
-                      <Text style={styles.activityTime}>{act.time}</Text>
-                      <Text style={styles.activityTitle}>{act.title}</Text>
-                    </View>
-                  ))}
-                <Button title="+ Add Activity" variant="outline" size="sm" style={{ marginTop: spacing.md }} />
-              </Card>
             </View>
+          </ScrollView>
+
+          <BottomNavBar activeTab="explore" onTabPress={handleNavTabPress} />
+        </View>
+      )}
+
+      {/* 3. TRIPS TAB (TRIP FLOW: DETAILS -> PLANNER -> SCANNER -> REVIEW) */}
+      {currentTab === 'trips' && (
+        <View style={styles.tabScreenContainer}>
+          {tripsView === 'details' && (
+            <TripDetailsExpenseScreen
+              onEditPlan={() => setTripsView('planner')}
+              onScanReceipt={() => setTripsView('scanner')}
+              onNavTabPress={handleNavTabPress}
+            />
           )}
 
-          {/* TAB 4: SCREEN 06 EXPENSE PREVIEW */}
-          {activeTab === 'expense' && (
-            <View style={styles.sectionContainer}>
-              <Card style={styles.cardItem}>
-                <View style={styles.rowBetween}>
-                  <View>
-                    <Text style={styles.metaLabel}>GROUP EXPENSE SUMMARY</Text>
-                    <Text style={styles.moneyTitle}>{totalSpent.toLocaleString()} VND</Text>
-                    <Text style={styles.metaSubtitle}>of {totalBudget.toLocaleString()} VND budget</Text>
-                  </View>
-                  <Button title="📷 Scan Receipt" variant="secondary" size="sm" fullWidth={false} />
-                </View>
-
-                {/* Budget Progress Bar */}
-                <View style={styles.progressBarBg}>
-                  <View
-                    style={[
-                      styles.progressBarFill,
-                      { width: `${Math.min(100, (totalSpent / totalBudget) * 100)}%` },
-                    ]}
-                  />
-                </View>
-
-                {/* Expense List */}
-                <View style={{ marginTop: spacing.base, gap: spacing.base }}>
-                  {expenses.map((item) => (
-                    <View key={item.id} style={styles.expenseRow}>
-                      <View>
-                        <Text style={styles.expenseName}>{item.merchantName}</Text>
-                        <Text style={styles.expenseDate}>{item.date} • Split: {item.splitMemberUids.join(', ')}</Text>
-                      </View>
-                      <Text style={styles.expenseAmount}>{item.amount.toLocaleString()} VND</Text>
-                    </View>
-                  ))}
-                </View>
-              </Card>
-            </View>
+          {tripsView === 'planner' && (
+            <TripPlannerScreen
+              onBack={() => setTripsView('details')}
+              onOpenDashboard={() => setTripsView('details')}
+              onNavTabPress={handleNavTabPress}
+            />
           )}
 
-          {/* TAB 5: SCREEN 10 USER PROFILE PREVIEW */}
-          {activeTab === 'profile' && user && (
-            <View style={styles.sectionContainer}>
-              <Card style={styles.cardItem}>
-                <View style={styles.profileHeader}>
-                  <Image source={{ uri: user.avatarUrl }} style={styles.avatar} />
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.profileName}>{user.displayName}</Text>
-                    <Text style={styles.profileRole}>@viet.travels • Senior CS Student</Text>
-                    <Badge label={`📍 ${user.location}`} variant="teal" style={{ marginTop: 4 }} />
-                  </View>
-                </View>
-                <Text style={styles.profileBio}>{user.bio}</Text>
+          {tripsView === 'scanner' && (
+            <ReceiptScannerScreen
+              onClose={() => setTripsView('details')}
+              onScanComplete={() => setTripsView('review')}
+            />
+          )}
+
+          {tripsView === 'review' && (
+            <OCRExpenseReviewScreen
+              onRetake={() => setTripsView('scanner')}
+              onSaveSuccess={() => setTripsView('details')}
+              onNavTabPress={handleNavTabPress}
+            />
+          )}
+        </View>
+      )}
+
+      {/* 4. PROFILE TAB */}
+      {currentTab === 'profile' && (
+        <View style={styles.tabScreenContainer}>
+          <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false}>
+            <View style={styles.profileContainer}>
+              <View style={styles.profileHeaderCard}>
+                <Image
+                  source={{
+                    uri: user?.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200',
+                  }}
+                  style={styles.profileAvatar}
+                />
+                <Text style={styles.profileName}>{user?.displayName || 'Trần Quang Việt'}</Text>
+                <Text style={styles.profileBio}>
+                  Senior CS Student • Travel & Expense Tracker
+                </Text>
 
                 <View style={styles.statsRow}>
                   <View style={styles.statBox}>
-                    <Text style={styles.statNum}>{user.tripsCount}</Text>
+                    <Text style={styles.statNum}>{user?.tripsCount || 12}</Text>
                     <Text style={styles.statLabel}>TRIPS</Text>
                   </View>
                   <View style={styles.statBox}>
-                    <Text style={styles.statNum}>{user.savedCount}</Text>
+                    <Text style={styles.statNum}>{user?.savedCount || 8}</Text>
                     <Text style={styles.statLabel}>SAVED</Text>
                   </View>
                   <View style={styles.statBox}>
-                    <Text style={styles.statNum}>{user.friendsCount}</Text>
+                    <Text style={styles.statNum}>{user?.friendsCount || 348}</Text>
                     <Text style={styles.statLabel}>FRIENDS</Text>
                   </View>
                 </View>
-              </Card>
+              </View>
+
+              <View style={styles.profileMenuCard}>
+                <TouchableOpacity style={styles.menuItem}>
+                  <Text style={styles.menuItemText}>My Active Trips</Text>
+                  <Text style={styles.menuArrow}>›</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.menuItem}>
+                  <Text style={styles.menuItemText}>Expense & Bill History</Text>
+                  <Text style={styles.menuArrow}>›</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.menuItem}>
+                  <Text style={styles.menuItemText}>Settings & Preferences</Text>
+                  <Text style={styles.menuArrow}>›</Text>
+                </TouchableOpacity>
+              </View>
             </View>
-          )}
-        </ScrollView>
+          </ScrollView>
+
+          <BottomNavBar activeTab="profile" onTabPress={handleNavTabPress} />
+        </View>
+      )}
       </View>
-    </ScreenContainer>
+    </SafeAreaProvider>
   );
 }
 
 const styles = StyleSheet.create({
-  topBrandBar: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: spacing.xl,
-    paddingTop: spacing.md,
-    paddingBottom: spacing.base,
-    backgroundColor: palette.slate[900],
-  },
-  brandContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.base,
-  },
-  logoBadge: {
-    width: 34,
-    height: 34,
-    borderRadius: radii.md,
-    backgroundColor: palette.teal[600],
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  logoText: {
-    color: palette.common.white,
-    fontWeight: typography.fontWeights.extrabold,
-    fontSize: typography.fontSizes.lg,
-  },
-  brandTitle: {
-    color: palette.common.white,
-    fontSize: typography.fontSizes.md,
-    fontWeight: typography.fontWeights.extrabold,
-  },
-  brandSubtitle: {
-    color: palette.slate[400],
-    fontSize: typography.fontSizes['2xs'],
-  },
-  tabContainer: {
-    backgroundColor: palette.slate[900],
-    paddingBottom: spacing.base,
-    borderBottomWidth: 1,
-    borderBottomColor: palette.slate[800],
-  },
-  tabScroll: {
-    paddingHorizontal: spacing.xl,
-    gap: spacing.sm,
-  },
-  tabButton: {
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    borderRadius: radii.full,
-    backgroundColor: palette.slate[800],
-  },
-  tabButtonActive: {
-    backgroundColor: palette.teal[600],
-  },
-  tabButtonText: {
-    color: palette.slate[400],
-    fontSize: typography.fontSizes.xs,
-    fontWeight: typography.fontWeights.semibold,
-  },
-  tabButtonTextActive: {
-    color: palette.common.white,
-    fontWeight: typography.fontWeights.bold,
-  },
-  phoneFrame: {
+  appContainer: {
     flex: 1,
-    backgroundColor: palette.slate[50],
+    backgroundColor: '#FFFFFF',
   },
-  screenScroll: {
+  tabScreenContainer: {
     flex: 1,
+    backgroundColor: '#FFFFFF',
   },
-  scrollContent: {
-    padding: spacing.xl,
-    paddingBottom: 40,
+  exploreHeader: {
+    padding: 16,
+    paddingTop: 54,
+    gap: 6,
   },
-  sectionContainer: {
-    gap: spacing.xl,
+  exploreTitle: {
+    fontSize: 20,
+    fontWeight: '800',
+    color: '#0F172A',
   },
-  cardItem: {
-    backgroundColor: palette.common.white,
+  exploreSubtitle: {
+    fontSize: 12,
+    color: '#64748B',
+    marginBottom: 8,
   },
-  headline: {
-    fontSize: typography.fontSizes.xl,
-    fontWeight: typography.fontWeights.extrabold,
-    color: palette.slate[900],
-    marginBottom: spacing.xs,
-  },
-  bodyText: {
-    fontSize: typography.fontSizes.base,
-    color: palette.slate[600],
-    lineHeight: typography.lineHeights.base,
-  },
-  cardTitle: {
-    fontSize: typography.fontSizes.md,
-    fontWeight: typography.fontWeights.bold,
-    color: palette.slate[900],
-    marginBottom: spacing.base,
-  },
-  paletteRow: {
-    flexDirection: 'row',
-    gap: spacing.sm,
-  },
-  colorBox: {
-    flex: 1,
-    paddingVertical: spacing.base,
-    paddingHorizontal: spacing.xs,
-    borderRadius: radii.md,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  colorTextLight: {
-    color: palette.common.white,
-    fontSize: typography.fontSizes['2xs'],
-    fontWeight: typography.fontWeights.bold,
-  },
-  colorHexLight: {
-    color: 'rgba(255,255,255,0.8)',
-    fontSize: 9,
-    marginTop: 2,
-  },
-  badgeRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing.xs,
-    marginTop: spacing.xs,
-  },
-  heroImageWrapper: {
-    height: 190,
-    borderRadius: radii['2xl'],
-    overflow: 'hidden',
-    position: 'relative',
-    backgroundColor: palette.teal[900],
-  },
-  heroImage: {
-    width: '100%',
-    height: '100%',
-    opacity: 0.85,
-  },
-  heroOverlay: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    padding: spacing.xl,
-    backgroundColor: 'rgba(19, 78, 74, 0.75)',
-  },
-  heroTitle: {
-    fontSize: typography.fontSizes['2xl'],
-    fontWeight: typography.fontWeights.extrabold,
-    color: palette.common.white,
-  },
-  heroSubtitle: {
-    fontSize: typography.fontSizes.xs,
-    color: palette.teal[100],
-    marginTop: 2,
-  },
-  dividerRow: {
+  searchBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginVertical: spacing.xl,
-    gap: spacing.md,
-  },
-  dividerLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: palette.slate[200],
-  },
-  dividerText: {
-    fontSize: typography.fontSizes['2xs'],
-    color: palette.slate[400],
-    fontWeight: typography.fontWeights.bold,
-  },
-  metaLabel: {
-    fontSize: typography.fontSizes['2xs'],
-    fontWeight: typography.fontWeights.bold,
-    color: palette.slate[400],
-    marginBottom: 4,
-  },
-  tripMetaRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginVertical: spacing.sm,
-  },
-  tagText: {
-    fontSize: typography.fontSizes.sm,
-    color: palette.slate[700],
-  },
-  daySelector: {
-    flexDirection: 'row',
-    gap: spacing.sm,
-  },
-  dayButton: {
-    flex: 1,
-    paddingVertical: spacing.sm,
-    backgroundColor: palette.slate[200],
-    borderRadius: radii.md,
-    alignItems: 'center',
-  },
-  dayButtonActive: {
-    backgroundColor: palette.teal[600],
-  },
-  dayButtonText: {
-    fontSize: typography.fontSizes.sm,
-    fontWeight: typography.fontWeights.bold,
-    color: palette.slate[700],
-  },
-  dayButtonTextActive: {
-    color: palette.common.white,
-  },
-  activityItem: {
-    backgroundColor: palette.slate[50],
+    backgroundColor: '#F8FAFC',
     borderWidth: 1,
-    borderColor: palette.slate[100],
-    borderRadius: radii.md,
-    padding: spacing.base,
-    marginBottom: spacing.sm,
+    borderColor: '#E2E8F0',
+    borderRadius: 14,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    gap: 8,
   },
-  activityTime: {
-    fontSize: typography.fontSizes.xs,
-    fontWeight: typography.fontWeights.bold,
-    color: palette.teal[700],
+  searchIcon: {
+    fontSize: 14,
   },
-  activityTitle: {
-    fontSize: typography.fontSizes.sm,
-    fontWeight: typography.fontWeights.semibold,
-    color: palette.slate[800],
-    marginTop: 2,
+  searchInput: {
+    flex: 1,
+    fontSize: 12.5,
+    color: '#0F172A',
   },
-  rowBetween: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
+  exploreContent: {
+    padding: 16,
+    gap: 16,
+    paddingBottom: 24,
   },
-  moneyTitle: {
-    fontSize: typography.fontSizes['2xl'],
-    fontWeight: typography.fontWeights.extrabold,
-    color: palette.slate[900],
-  },
-  metaSubtitle: {
-    fontSize: typography.fontSizes.xs,
-    color: palette.slate[500],
-  },
-  progressBarBg: {
-    width: '100%',
-    height: 8,
-    backgroundColor: palette.slate[100],
-    borderRadius: radii.full,
+  destinationCard: {
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#F1F5F9',
+    borderRadius: 18,
     overflow: 'hidden',
-    marginTop: spacing.base,
+    ...shadows.sm,
   },
-  progressBarFill: {
-    height: '100%',
-    backgroundColor: palette.teal[600],
-    borderRadius: radii.full,
+  destImage: {
+    width: '100%',
+    height: 160,
+    resizeMode: 'cover',
   },
-  expenseRow: {
+  destCardBody: {
+    padding: 14,
+    gap: 6,
+  },
+  destCardTop: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: spacing.xs,
-    borderBottomWidth: 1,
-    borderBottomColor: palette.slate[100],
   },
-  expenseName: {
-    fontSize: typography.fontSizes.sm,
-    fontWeight: typography.fontWeights.bold,
-    color: palette.slate[900],
+  destName: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: '#0F172A',
   },
-  expenseDate: {
-    fontSize: typography.fontSizes['2xs'],
-    color: palette.slate[400],
-    marginTop: 2,
+  destPrice: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#0D9488',
   },
-  expenseAmount: {
-    fontSize: typography.fontSizes.sm,
-    fontWeight: typography.fontWeights.extrabold,
-    color: palette.teal[600],
-  },
-  profileHeader: {
+  destLocationRow: {
     flexDirection: 'row',
-    gap: spacing.base,
     alignItems: 'center',
+    gap: 4,
   },
-  avatar: {
-    width: 60,
-    height: 60,
-    borderRadius: radii.full,
-    borderWidth: 3,
-    borderColor: palette.teal[200],
+  destLocationText: {
+    fontSize: 11,
+    color: '#64748B',
+  },
+  profileContainer: {
+    padding: 16,
+    paddingTop: 54,
+    gap: 16,
+  },
+  profileHeaderCard: {
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#F1F5F9',
+    borderRadius: 20,
+    padding: 20,
+    alignItems: 'center',
+    ...shadows.sm,
+  },
+  profileAvatar: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    marginBottom: 10,
   },
   profileName: {
-    fontSize: typography.fontSizes.lg,
-    fontWeight: typography.fontWeights.extrabold,
-    color: palette.slate[900],
-  },
-  profileRole: {
-    fontSize: typography.fontSizes.xs,
-    color: palette.slate[500],
+    fontSize: 16,
+    fontWeight: '800',
+    color: '#0F172A',
   },
   profileBio: {
-    fontSize: typography.fontSizes.sm,
-    color: palette.slate[600],
-    marginTop: spacing.base,
-    lineHeight: typography.lineHeights.sm,
+    fontSize: 11.5,
+    color: '#64748B',
+    marginTop: 2,
+    marginBottom: 16,
   },
   statsRow: {
     flexDirection: 'row',
+    width: '100%',
+    justifyContent: 'space-around',
     borderTopWidth: 1,
-    borderTopColor: palette.slate[100],
-    marginTop: spacing.base,
-    paddingTop: spacing.base,
+    borderTopColor: '#F8FAFC',
+    paddingTop: 14,
   },
   statBox: {
-    flex: 1,
     alignItems: 'center',
   },
   statNum: {
-    fontSize: typography.fontSizes.md,
-    fontWeight: typography.fontWeights.extrabold,
-    color: palette.slate[900],
+    fontSize: 16,
+    fontWeight: '800',
+    color: '#0F172A',
   },
   statLabel: {
-    fontSize: typography.fontSizes['2xs'],
-    fontWeight: typography.fontWeights.bold,
-    color: palette.slate[400],
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#94A3B8',
     marginTop: 2,
+  },
+  profileMenuCard: {
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#F1F5F9',
+    borderRadius: 18,
+    paddingVertical: 6,
+    ...shadows.sm,
+  },
+  menuItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F8FAFC',
+  },
+  menuItemText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#1E293B',
+  },
+  menuArrow: {
+    fontSize: 18,
+    color: '#94A3B8',
   },
 });
