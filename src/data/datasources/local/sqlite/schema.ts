@@ -3,6 +3,10 @@
  * Supports Offline-First data storage and sync_queue mechanism
  */
 
+export interface SQLiteExecutor {
+  execAsync: (sql: string) => Promise<void>;
+}
+
 export const CREATE_TRIPS_TABLE = `
   CREATE TABLE IF NOT EXISTS trips (
     id TEXT PRIMARY KEY NOT NULL,
@@ -73,6 +77,25 @@ export const CREATE_SYNC_QUEUE_TABLE = `
     table_name TEXT NOT NULL,
     action TEXT NOT NULL, -- INSERT, UPDATE, DELETE
     payload_json TEXT NOT NULL,
-    created_at INTEGER NOT NULL
+    created_at INTEGER NOT NULL,
+    retry_count INTEGER NOT NULL DEFAULT 0
   );
 `;
+
+export const tripMateSchema = [
+  CREATE_TRIPS_TABLE,
+  CREATE_ACTIVITIES_TABLE,
+  CREATE_EXPENSES_TABLE,
+  CREATE_POSTS_CACHE_TABLE,
+  CREATE_SYNC_QUEUE_TABLE,
+  'CREATE INDEX IF NOT EXISTS idx_activities_trip_day ON activities(trip_id, day_index);',
+  'CREATE INDEX IF NOT EXISTS idx_expenses_trip_date ON expenses(trip_id, date);',
+  'CREATE INDEX IF NOT EXISTS idx_sync_queue_created ON sync_queue(created_at);',
+];
+
+export async function initializeTripMateDatabase(database: SQLiteExecutor): Promise<void> {
+  await database.execAsync('PRAGMA foreign_keys = ON;');
+  for (const statement of tripMateSchema) {
+    await database.execAsync(statement);
+  }
+}
