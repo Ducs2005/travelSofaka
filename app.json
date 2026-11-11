@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "Travelsofaka",
-    "slug": "travelsofaka",
+    "slug": "travel-sofaka",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -25,6 +25,12 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "extra": {
+      "eas": {
+        "projectId": "fee0d3ab-dcc0-4642-9a8c-6e49a10fbfde"
+      }
+    },
+    "owner": "lhatu"
   }
 }
