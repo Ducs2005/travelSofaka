@@ -1,17 +1,62 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, Image } from 'react-native';
+import { View, Text, StyleSheet, Image, ActivityIndicator } from 'react-native';
 import { palette, typography, radii, spacing } from '@/core/theme';
 import { Button, Card, Input, Badge } from '@/presentation/components/common';
 import { useAppNavigation } from '@/presentation/navigation/NavigationContext';
+import { useAuthStore } from '@/presentation/stores/authStore';
+import { AuthRepositoryImpl } from '@/data/repositories/AuthRepositoryImpl';
+
+const authRepo = new AuthRepositoryImpl();
 
 export const LoginScreen: React.FC = () => {
   const { navigate } = useAppNavigation();
-  const [email, setEmail] = useState('viet.tran@student.edu.vn');
-  const [password, setPassword] = useState('••••••••••••');
+  const { setUser, setLoading, setError, isLoading, error } = useAuthStore();
 
-  const handleLogin = () => {
-    // Navigate straight to Home feed
-    navigate('HOME');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [isRegisterMode, setIsRegisterMode] = useState(false);
+  const [displayName, setDisplayName] = useState('');
+
+  const handleLogin = async () => {
+    if (!email.trim() || !password.trim()) {
+      setError('Vui lòng nhập email và mật khẩu');
+      return;
+    }
+    setError(null);
+    setLoading(true);
+    try {
+      const user = await authRepo.loginWithEmail(email.trim(), password);
+      setUser(user);
+      navigate('HOME');
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : 'Đăng nhập thất bại';
+      setError(msg.includes('invalid-credential') ? 'Email hoặc mật khẩu không đúng' : msg);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleRegister = async () => {
+    if (!email.trim() || !password.trim() || !displayName.trim()) {
+      setError('Vui lòng nhập đầy đủ thông tin');
+      return;
+    }
+    if (password.length < 6) {
+      setError('Mật khẩu phải ít nhất 6 ký tự');
+      return;
+    }
+    setError(null);
+    setLoading(true);
+    try {
+      const user = await authRepo.registerWithEmail(email.trim(), password, displayName.trim());
+      setUser(user);
+      navigate('HOME');
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : 'Đăng ký thất bại';
+      setError(msg.includes('email-already-in-use') ? 'Email đã được sử dụng' : msg);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -29,44 +74,64 @@ export const LoginScreen: React.FC = () => {
         </View>
       </View>
 
-      {/* Login Card */}
+      {/* Auth Card */}
       <Card style={styles.formCard}>
+        {isRegisterMode && (
+          <Input
+            label="Tên hiển thị"
+            value={displayName}
+            onChangeText={setDisplayName}
+            placeholder="Nguyễn Văn A"
+            autoCapitalize="words"
+          />
+        )}
+
         <Input
-          label="University or Personal Email"
+          label="Email"
           value={email}
           onChangeText={setEmail}
           placeholder="name@student.edu.vn"
           keyboardType="email-address"
           autoCapitalize="none"
         />
+
         <Input
-          label="Password"
+          label="Mật khẩu"
           value={password}
           onChangeText={setPassword}
-          placeholder="Enter password"
+          placeholder={isRegisterMode ? 'Ít nhất 6 ký tự' : 'Nhập mật khẩu'}
           secureTextEntry
         />
-        <Button
-          title="Sign In to TripMate"
-          variant="primary"
-          onPress={handleLogin}
-          style={{ marginTop: spacing.xs }}
-        />
 
-        <View style={styles.dividerRow}>
-          <View style={styles.dividerLine} />
-          <Text style={styles.dividerText}>OR CONTINUE WITH</Text>
-          <View style={styles.dividerLine} />
-        </View>
+        {/* Error message */}
+        {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
-        <Button
-          title="Continue with Google"
-          variant="outline"
-          onPress={handleLogin}
-        />
+        {isLoading ? (
+          <ActivityIndicator
+            color={palette.teal[600]}
+            size="large"
+            style={{ marginTop: spacing.md }}
+          />
+        ) : (
+          <Button
+            title={isRegisterMode ? 'Tạo tài khoản' : 'Đăng nhập'}
+            variant="primary"
+            onPress={isRegisterMode ? handleRegister : handleLogin}
+            style={{ marginTop: spacing.xs }}
+          />
+        )}
 
         <Text style={styles.footerPrompt}>
-          New to TripMate? <Text style={styles.footerLink}>Create Student Account</Text>
+          {isRegisterMode ? 'Đã có tài khoản? ' : 'Chưa có tài khoản? '}
+          <Text
+            style={styles.footerLink}
+            onPress={() => {
+              setIsRegisterMode((prev) => !prev);
+              setError(null);
+            }}
+          >
+            {isRegisterMode ? 'Đăng nhập' : 'Đăng ký ngay'}
+          </Text>
         </Text>
       </Card>
     </View>
@@ -111,21 +176,11 @@ const styles = StyleSheet.create({
   formCard: {
     backgroundColor: palette.common.white,
   },
-  dividerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginVertical: spacing.xl,
-    gap: spacing.md,
-  },
-  dividerLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: palette.slate[200],
-  },
-  dividerText: {
-    fontSize: typography.fontSizes['2xs'],
-    color: palette.slate[400],
-    fontWeight: typography.fontWeights.bold,
+  errorText: {
+    color: palette.coral[500],
+    fontSize: typography.fontSizes.xs,
+    marginTop: spacing.sm,
+    textAlign: 'center',
   },
   footerPrompt: {
     textAlign: 'center',

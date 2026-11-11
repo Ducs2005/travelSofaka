@@ -4,7 +4,7 @@ import { ScreenName, TabName, RouteState, NavigationContextType } from './types'
 const NavigationContext = createContext<NavigationContextType | undefined>(undefined);
 
 export const NavigationProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [history, setHistory] = useState<RouteState[]>([{ name: 'HOME' }]);
+  const [history, setHistory] = useState<RouteState[]>([{ name: 'LOGIN' }]);
   const [activeTab, setActiveTab] = useState<TabName>('home');
 
   const currentRoute = history[history.length - 1];

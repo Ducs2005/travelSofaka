@@ -2,15 +2,19 @@ import { ITripRepository } from '@/domain/repositories/trip_repository';
 import { TripPlan } from '@/domain/entities/trip';
 import { Activity } from '@/domain/entities/activity';
 import { TripLocalDataSource } from '../datasources/local/sqlite/TripLocalDataSource';
+import { TripRemoteDataSource } from '../datasources/remote/firestore/TripRemoteDataSource';
+
+const remote = new TripRemoteDataSource();
 
 export class TripRepositoryImpl implements ITripRepository {
   constructor(private readonly localDataSource: TripLocalDataSource = new TripLocalDataSource()) {}
 
   async getActiveTrip(): Promise<TripPlan | null> {
+    // Thử lấy từ local trước (offline-first)
     const localTrip = await this.localDataSource.getActiveTrip();
     if (localTrip) return localTrip;
 
-    // Fallback seed data if SQLite is fresh
+    // Fallback seed data nếu chưa có gì
     const defaultTrip: TripPlan = {
       id: 'trip_danang_hoian_01',
       creatorUid: 'user_viet_tran',
@@ -22,7 +26,7 @@ export class TripRepositoryImpl implements ITripRepository {
       spentTotal: 2635000,
       joinedMemberUids: ['user_viet_tran', 'user_duc_pham', 'user_tu_le', 'user_lam_nguyen'],
       isActive: true,
-      isSynced: true,
+      isSynced: false,
       createdAt: Date.now(),
       activities: [
         {
@@ -59,25 +63,42 @@ export class TripRepositoryImpl implements ITripRepository {
     return defaultTrip;
   }
 
-  async getTrips(): Promise<TripPlan[]> {
+  async getTrips(uid: string): Promise<TripPlan[]> {
+    try {
+      const remoteTrips = await remote.getTrips(uid);
+      if (remoteTrips.length > 0) return remoteTrips;
+    } catch (_e) {
+      // offline fallback
+    }
     const active = await this.getActiveTrip();
     return active ? [active] : [];
   }
 
   async getTripById(id: string): Promise<TripPlan | null> {
-    const active = await this.getActiveTrip();
-    return active?.id === id ? active : null;
+    try {
+      return await remote.getTripById(id);
+    } catch (_e) {
+      const active = await this.getActiveTrip();
+      return active?.id === id ? active : null;
+    }
   }
 
   async createTrip(tripData: Omit<TripPlan, 'id' | 'createdAt' | 'isSynced'>): Promise<TripPlan> {
-    const newTrip: TripPlan = {
-      ...tripData,
-      id: 'trip_' + Date.now(),
-      createdAt: Date.now(),
-      isSynced: false,
-    };
-    await this.localDataSource.saveTrip(newTrip);
-    return newTrip;
+    try {
+      const created = await remote.createTrip(tripData);
+      await this.localDataSource.saveTrip(created);
+      return created;
+    } catch (_e) {
+      // Offline: tạo local trước
+      const newTrip: TripPlan = {
+        ...tripData,
+        id: 'trip_' + Date.now(),
+        createdAt: Date.now(),
+        isSynced: false,
+      };
+      await this.localDataSource.saveTrip(newTrip);
+      return newTrip;
+    }
   }
 
   async generateAIItinerary(
@@ -86,7 +107,6 @@ export class TripRepositoryImpl implements ITripRepository {
     _budget: number,
     _preferences?: string
   ): Promise<Activity[]> {
-    // LLM API simulation returning structured activities
     const generated: Activity[] = [];
     for (let day = 1; day <= days; day++) {
       generated.push(
@@ -114,6 +134,11 @@ export class TripRepositoryImpl implements ITripRepository {
   }
 
   async saveActivities(tripId: string, activities: Activity[]): Promise<void> {
+    try {
+      await remote.saveActivities(tripId, activities);
+    } catch (_e) {
+      // offline: update local
+    }
     const trip = await this.getActiveTrip();
     if (trip && trip.id === tripId) {
       trip.activities = [...trip.activities, ...activities];
