@@ -64,6 +64,7 @@ export class TripLocalDataSource {
       ]
     );
 
+    await db.runAsync('DELETE FROM activities WHERE trip_id = ?', [trip.id]);
     if (trip.activities && trip.activities.length > 0) {
       for (const act of trip.activities) {
         await db.runAsync(
