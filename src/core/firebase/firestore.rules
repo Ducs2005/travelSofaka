@@ -1,0 +1,71 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper functions for authentication & authorization
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isTripMember(tripData) {
+      return isAuthenticated() && (
+        request.auth.uid == tripData.creatorUid ||
+        request.auth.uid in tripData.joinedMemberUids
+      );
+    }
+
+    // 1. Users Collection
+    match /users/{userId} {
+      // Anyone authenticated can view public profiles
+      allow read: if isAuthenticated();
+      // Only the account owner can update their profile
+      allow create, update, delete: if isOwner(userId);
+    }
+
+    // 2. Trips Collection
+    match /trips/{tripId} {
+      // Members can read trip details
+      allow read: if isTripMember(resource.data);
+      // Authenticated users can create new trips (they must be the creator)
+      allow create: if isAuthenticated() && request.resource.data.creatorUid == request.auth.uid;
+      // Only the creator or joined members can update trip details
+      allow update: if isTripMember(resource.data);
+      // Only the trip creator can delete the trip
+      allow delete: if isAuthenticated() && resource.data.creatorUid == request.auth.uid;
+
+      // Subcollection: Activities
+      match /activities/{activityId} {
+        allow read, write: if isTripMember(get(/databases/$(database)/documents/trips/$(tripId)).data);
+      }
+    }
+
+    // 3. Expenses Collection
+    match /expenses/{expenseId} {
+      // Must be a member of the associated trip to read/write expenses
+      allow read, write: if isAuthenticated() && 
+        isTripMember(get(/databases/$(database)/documents/trips/$(resource.data.tripId)).data);
+      allow create: if isAuthenticated();
+    }
+
+    // 4. Social Posts Collection
+    match /posts/{postId} {
+      // Feed is public to all authenticated users
+      allow read: if isAuthenticated();
+      // Users can only create posts under their own authorUid
+      allow create: if isAuthenticated() && request.resource.data.authorUid == request.auth.uid;
+      // Only the author can update or delete their post
+      allow update, delete: if isAuthenticated() && resource.data.authorUid == request.auth.uid;
+
+      // Subcollection: Comments
+      match /comments/{commentId} {
+        allow read: if isAuthenticated();
+        allow create: if isAuthenticated();
+        allow delete: if isAuthenticated() && resource.data.authorUid == request.auth.uid;
+      }
+    }
+  }
+}

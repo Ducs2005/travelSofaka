@@ -2,7 +2,7 @@ export interface UserProfile {
   uid: string;
   email: string;
   displayName: string;
-  avatarUrl: string;
+  avatarUrl?: string;
   bio?: string;
   location?: string;
   tripsCount: number;

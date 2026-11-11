@@ -15,19 +15,8 @@ interface AuthState {
 }
 
 export const useAuthStore = create<AuthState>((set) => ({
-  user: {
-    uid: 'user_viet_tran',
-    email: 'viet.tran@student.edu.vn',
-    displayName: 'Trần Quang Việt',
-    avatarUrl: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=160',
-    bio: 'Exploring Vietnam with friends 📸 | Coffee & cloud hunting enthusiast ☕⛰️',
-    location: 'Da Nang, Vietnam',
-    tripsCount: 12,
-    savedCount: 8,
-    friendsCount: 348,
-    createdAt: Date.now(),
-  },
-  isAuthenticated: true,
+  user: null,
+  isAuthenticated: false,
   isLoading: false,
   error: null,
 
