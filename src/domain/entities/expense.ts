@@ -1,4 +1,10 @@
-export type ExpenseCategory = 'FOOD' | 'HOMESTAY' | 'TRANSPORT' | 'ENTERTAINMENT' | 'OTHER';
+export type ExpenseCategory =
+  | 'FOOD'
+  | 'HOMESTAY'
+  | 'ACCOMMODATION'
+  | 'TRANSPORT'
+  | 'ENTERTAINMENT'
+  | 'OTHER';
 
 export interface ExpenseItem {
   id: string;
@@ -13,3 +19,4 @@ export interface ExpenseItem {
   createdAt: number;
   isSynced: boolean;
 }
+

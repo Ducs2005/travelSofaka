@@ -1,31 +1,42 @@
-import { IExpenseRepository, OCRScanResult } from '@/domain/repositories/expense_repository';
 import { ExpenseItem } from '@/domain/entities/expense';
-import { ExpenseRemoteDataSource } from '../datasources/remote/firestore/ExpenseRemoteDataSource';
+import { IExpenseRepository, OCRScanResult } from '@/domain/repositories/expense_repository';
+import { ParseReceiptTextUseCase } from '@/domain/usecases/ocr/ParseReceiptTextUseCase';
 import { ExpenseLocalDataSource } from '../datasources/local/sqlite/ExpenseLocalDataSource';
+import { ExpenseRemoteDataSource } from '../datasources/remote/firestore/ExpenseRemoteDataSource';
+import { IOCRDataSource, MLKitOCRDataSource } from '../datasources/remote/ocr/MLKitOCRDataSource';
 
 const remote = new ExpenseRemoteDataSource();
 
 export class ExpenseRepositoryImpl implements IExpenseRepository {
-  constructor(private readonly localDataSource: ExpenseLocalDataSource = new ExpenseLocalDataSource()) {}
+  private readonly ocrDataSource: IOCRDataSource;
+  private readonly parseReceiptUseCase: ParseReceiptTextUseCase;
+
+  constructor(
+    private readonly localDataSource: ExpenseLocalDataSource = new ExpenseLocalDataSource(),
+    ocrDataSource: IOCRDataSource = new MLKitOCRDataSource(),
+    parseReceiptUseCase: ParseReceiptTextUseCase = new ParseReceiptTextUseCase(),
+  ) {
+    this.ocrDataSource = ocrDataSource;
+    this.parseReceiptUseCase = parseReceiptUseCase;
+  }
 
   async getExpensesByTrip(tripId: string): Promise<ExpenseItem[]> {
     try {
-      // Ưu tiên lấy từ Firestore
-      const remoteList = await remote.getExpensesByTrip(tripId);
-      if (remoteList.length > 0) {
-        // Sync về local
-        for (const exp of remoteList) {
-          await this.localDataSource.saveExpense(exp);
+      const remoteExpenses = await remote.getExpensesByTrip(tripId);
+      if (remoteExpenses.length > 0) {
+        for (const expense of remoteExpenses) {
+          await this.localDataSource.saveExpense(expense);
         }
-        return remoteList;
+        return remoteExpenses;
       }
-    } catch (_e) {
-      // Offline fallback: đọc từ SQLite local
-      const localList = await this.localDataSource.getExpensesByTrip(tripId);
-      if (localList.length > 0) return localList;
+    } catch (_error) {
+      const localExpenses = await this.localDataSource.getExpensesByTrip(tripId);
+      if (localExpenses.length > 0) return localExpenses;
     }
 
-    // Seed data mặc định lần đầu
+    const localExpenses = await this.localDataSource.getExpensesByTrip(tripId);
+    if (localExpenses.length > 0) return localExpenses;
+
     const initialExpenses: ExpenseItem[] = [
       {
         id: 'exp_01',
@@ -53,39 +64,37 @@ export class ExpenseRepositoryImpl implements IExpenseRepository {
       },
     ];
 
-    for (const exp of initialExpenses) {
-      await this.localDataSource.saveExpense(exp);
+    for (const expense of initialExpenses) {
+      await this.localDataSource.saveExpense(expense);
     }
     return initialExpenses;
   }
 
-  async addExpense(expenseData: Omit<ExpenseItem, 'id' | 'createdAt' | 'isSynced'>): Promise<ExpenseItem> {
+  async addExpense(
+    expenseData: Omit<ExpenseItem, 'id' | 'createdAt' | 'isSynced'>,
+  ): Promise<ExpenseItem> {
     try {
-      // Thêm lên Firestore
       const saved = await remote.addExpense(expenseData);
-      // Sync về local
       await this.localDataSource.saveExpense(saved);
       return saved;
-    } catch (_e) {
-      // Offline: lưu local trước, đánh dấu isSynced = false
-      const newExpense: ExpenseItem = {
+    } catch (_error) {
+      const localExpense: ExpenseItem = {
         ...expenseData,
-        id: 'exp_' + Date.now(),
+        id: `exp_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
         createdAt: Date.now(),
         isSynced: false,
       };
-      await this.localDataSource.saveExpense(newExpense);
-      return newExpense;
+      await this.localDataSource.saveExpense(localExpense);
+      return localExpense;
     }
   }
 
-  async scanReceiptOCR(_imageUri: string): Promise<OCRScanResult> {
-    // TODO: tích hợp Google ML Kit Text Recognition
+  async scanReceiptOCR(imageUri: string, base64Data?: string): Promise<OCRScanResult> {
+    const recognition = await this.ocrDataSource.recognizeText(imageUri, base64Data);
+    const parsed = this.parseReceiptUseCase.execute(recognition.text);
     return {
-      merchantName: 'Cộng Cà Phê - Bạch Đằng, Da Nang',
-      date: 'Oct 24, 2026',
-      amount: 185000,
-      confidence: 0.95,
+      ...parsed,
+      imageUri: recognition.imageUri ?? imageUri,
     };
   }
 }
