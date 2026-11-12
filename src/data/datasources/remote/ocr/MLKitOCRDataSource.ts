@@ -69,6 +69,14 @@ Ngày: 24/10/2026
 TỔNG THANH TOÁN: 104,000 VND`,
   };
 
+  // Redundant free API keys for OCR.space Engine 2
+  private static readonly CLOUD_OCR_KEYS = [
+    'K88894178888957',
+    'K81682361188957',
+    'K89694468588957',
+    'helloworld',
+  ];
+
   public async recognizeText(
     imageUri: string,
     base64Data?: string
@@ -199,10 +207,13 @@ TỔNG THANH TOÁN: 104,000 VND`,
       return null;
     }
 
-    const apiKey = process.env.EXPO_PUBLIC_OCR_SPACE_API_KEY;
-    if (!apiKey) return null;
+    const customKey = process.env.EXPO_PUBLIC_OCR_SPACE_API_KEY;
+    const keysToTry = customKey
+      ? [customKey, ...MLKitOCRDataSource.CLOUD_OCR_KEYS]
+      : MLKitOCRDataSource.CLOUD_OCR_KEYS;
 
-    try {
+    for (const apiKey of keysToTry) {
+      try {
         const formData = new FormData();
         formData.append('apikey', apiKey);
         formData.append('OCREngine', '2');
@@ -226,7 +237,9 @@ TỔNG THANH TOÁN: 104,000 VND`,
 
         clearTimeout(timeoutId);
 
-        if (!response.ok) return null;
+        if (!response.ok) {
+          continue;
+        }
 
         const json = await response.json();
         if (
@@ -240,8 +253,10 @@ TỔNG THANH TOÁN: 104,000 VND`,
             return text;
           }
         }
-    } catch {
-      // Fall back to local OCR if the cloud request fails.
+      } catch {
+        // Try next key if network error or rate limit
+        continue;
+      }
     }
 
     return null;
