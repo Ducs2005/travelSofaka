@@ -7,7 +7,8 @@ import { SyncQueueLocalDataSource } from '../local/sqlite/SyncQueueLocalDataSour
 import { PostRemoteDataSource } from '../remote/firestore/PostRemoteDataSource';
 import { ExpenseRemoteDataSource } from '../remote/firestore/ExpenseRemoteDataSource';
 import { TripRemoteDataSource } from '../remote/firestore/TripRemoteDataSource';
-import { PostStorageDataSource } from '../remote/storage/PostStorageDataSource';
+import { createPostImageStorage } from '../remote/storage/PostImageStorage';
+import type { PostImageStorage } from '../remote/storage/PostImageStorage';
 import { drainSyncQueue } from './drainSyncQueue';
 
 /** Bài viết nằm trong sync_queue có thể còn giữ ảnh cục bộ chưa upload được lúc tạo */
@@ -47,7 +48,7 @@ export class SyncEngine implements ISyncEngine {
     private readonly queue: SyncQueueLocalDataSource = new SyncQueueLocalDataSource(),
     private readonly postLocal: PostLocalDataSource = new PostLocalDataSource(),
     private readonly postRemote: PostRemoteDataSource = new PostRemoteDataSource(),
-    private readonly storage: PostStorageDataSource = new PostStorageDataSource(),
+    private readonly storage: PostImageStorage = createPostImageStorage(),
     private readonly tripRemote: TripRemoteDataSource = new TripRemoteDataSource(),
     private readonly expenseRemote: ExpenseRemoteDataSource = new ExpenseRemoteDataSource(),
     private readonly network: NetworkMonitor = defaultNetworkMonitor

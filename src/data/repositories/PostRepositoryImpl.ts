@@ -10,7 +10,8 @@ import { PostLocalDataSource } from '../datasources/local/sqlite/PostLocalDataSo
 import { SyncQueueLocalDataSource } from '../datasources/local/sqlite/SyncQueueLocalDataSource';
 import { PostRemoteDataSource } from '../datasources/remote/firestore/PostRemoteDataSource';
 import { isConnectivityError } from '../datasources/remote/firestore/firestoreError';
-import { PostStorageDataSource } from '../datasources/remote/storage/PostStorageDataSource';
+import { createPostImageStorage } from '../datasources/remote/storage/PostImageStorage';
+import type { PostImageStorage } from '../datasources/remote/storage/PostImageStorage';
 import { mergeFeedPosts } from './feedMerge';
 
 function randomSuffix(): string {
@@ -28,7 +29,7 @@ export class PostRepositoryImpl implements IPostRepository {
     private readonly localDataSource: PostLocalDataSource = new PostLocalDataSource(),
     private readonly syncQueue: SyncQueueLocalDataSource = new SyncQueueLocalDataSource(),
     private readonly remote: PostRemoteDataSource = new PostRemoteDataSource(),
-    private readonly storage: PostStorageDataSource = new PostStorageDataSource()
+    private readonly storage: PostImageStorage = createPostImageStorage()
   ) {}
 
   async getFeedPosts(): Promise<TravelPost[]> {

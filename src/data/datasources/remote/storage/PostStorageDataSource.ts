@@ -1,28 +1,13 @@
-import { ImageManipulator, SaveFormat } from 'expo-image-manipulator';
 import { getDownloadURL, ref, uploadBytes } from 'firebase/storage';
 import { storage } from '@/core/firebase/firebaseConfig';
+import { compressImageForUpload } from './imageCompression';
+import type { CompressedImage } from './imageCompression';
+import type { PostImageStorage } from './PostImageStorage';
 
-/** Ảnh được thu nhỏ còn tối đa 1080px chiều ngang và nén JPEG quality 0.7 trước khi upload */
-const MAX_IMAGE_WIDTH = 1080;
-const JPEG_QUALITY = 0.7;
-
-export interface CompressedImage {
-  uri: string;
-  contentType: string;
-  fileExtension: string;
-}
-
-export class PostStorageDataSource {
-  /** Nén ảnh ngay trên thiết bị (không cần mạng) để giảm dung lượng tải lên Firebase Storage */
-  async compressImage(localUri: string): Promise<CompressedImage> {
-    const context = ImageManipulator.manipulate(localUri).resize({ width: MAX_IMAGE_WIDTH });
-    const rendered = await context.renderAsync();
-    const saved = await rendered.saveAsync({
-      compress: JPEG_QUALITY,
-      format: SaveFormat.JPEG,
-    });
-
-    return { uri: saved.uri, contentType: 'image/jpeg', fileExtension: 'jpg' };
+/** Firebase Storage — yêu cầu project Firebase ở gói Blaze mới bật được bucket */
+export class PostStorageDataSource implements PostImageStorage {
+  compressImage(localUri: string): Promise<CompressedImage> {
+    return compressImageForUpload(localUri);
   }
 
   /** Nén rồi upload lên Firebase Storage, trả về URL tải công khai của ảnh */
