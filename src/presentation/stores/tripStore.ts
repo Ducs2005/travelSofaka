@@ -1,7 +1,12 @@
 import { create } from 'zustand';
 import { TripPlan } from '@/domain/entities/trip';
 import { Activity } from '@/domain/entities/activity';
-import { generateGeminiItinerary } from '@/data/datasources/remote/ai/gemini_itinerary';
+import { TripRepositoryImpl } from '@/data/repositories/TripRepositoryImpl';
+import { GenerateAIItineraryUseCase } from '@/domain/usecases/trip/TripUseCases';
+import { useAuthStore } from '@/presentation/stores/authStore';
+
+const tripRepository = new TripRepositoryImpl();
+const generateAIItinerary = new GenerateAIItineraryUseCase(tripRepository);
 
 interface TripState {
   activeTrip: TripPlan | null;
@@ -12,12 +17,15 @@ interface TripState {
   // Actions
   setActiveTrip: (trip: TripPlan | null) => void;
   setSelectedDayIndex: (index: number) => void;
-  addActivity: (activity: Activity) => void;
-  generateItinerary: (destination: string, days: number, budget: number, preferences: string) => Promise<void>;
+  addActivity: (activity: Activity) => Promise<void>;
+  updateActivity: (activity: Activity) => Promise<void>;
+  removeActivity: (activityId: string) => Promise<void>;
+  saveActiveTrip: () => Promise<void>;
+  generateItinerary: (destination: string, days: number, budget: number, preferences: string, title?: string, startDate?: string) => Promise<void>;
   updateTrip: (updates: Partial<TripPlan>) => void;
 }
 
-export const useTripStore = create<TripState>((set) => ({
+export const useTripStore = create<TripState>((set, get) => ({
   activeTrip: {
     id: 'trip_danang_hoian_01',
     creatorUid: 'user_viet_tran',
@@ -76,39 +84,82 @@ export const useTripStore = create<TripState>((set) => ({
 
   setActiveTrip: (trip) => set({ activeTrip: trip }),
   setSelectedDayIndex: (index) => set({ selectedDayIndex: index }),
-  addActivity: (activity) =>
-    set((state) => {
-      if (!state.activeTrip) return state;
-      return {
-        activeTrip: {
-          ...state.activeTrip,
-          activities: [...state.activeTrip.activities, activity],
-        },
-      };
-    }),
-  generateItinerary: async (destination, days, budget, preferences) => {
+  addActivity: async (activity) => {
+    const trip = get().activeTrip;
+    if (!trip) return;
+    const savedTrip = await tripRepository.saveTrip({
+      ...trip,
+      activities: [...trip.activities, { ...activity, tripId: trip.id }],
+    });
+    set((state) => ({
+      activeTrip: savedTrip,
+      trips: [savedTrip, ...state.trips.filter((item) => item.id !== savedTrip.id)],
+    }));
+  },
+  updateActivity: async (activity) => {
+    const trip = get().activeTrip;
+    if (!trip) return;
+    const savedTrip = await tripRepository.saveTrip({
+      ...trip,
+      activities: trip.activities.map((item) => item.id === activity.id ? { ...activity, tripId: trip.id } : item),
+    });
+    set((state) => ({
+      activeTrip: savedTrip,
+      trips: [savedTrip, ...state.trips.filter((item) => item.id !== savedTrip.id)],
+    }));
+  },
+  removeActivity: async (activityId) => {
+    const trip = get().activeTrip;
+    if (!trip) return;
+    const savedTrip = await tripRepository.saveTrip({
+      ...trip,
+      activities: trip.activities.filter((item) => item.id !== activityId),
+    });
+    set((state) => ({
+      activeTrip: savedTrip,
+      trips: [savedTrip, ...state.trips.filter((item) => item.id !== savedTrip.id)],
+    }));
+  },
+  saveActiveTrip: async () => {
+    const trip = get().activeTrip;
+    if (!trip) return;
+    const savedTrip = await tripRepository.saveTrip(trip);
+    set((state) => ({
+      activeTrip: savedTrip,
+      trips: [savedTrip, ...state.trips.filter((item) => item.id !== savedTrip.id)],
+    }));
+  },
+  generateItinerary: async (destination, days, budget, preferences, title, startDate) => {
     set({ isLoading: true });
     try {
-      const activities = await generateGeminiItinerary(destination, days, budget, preferences);
-      set((state) => {
-        const tripId = state.activeTrip?.id ?? `trip_${Date.now()}`;
-        const trip: TripPlan = {
-          id: tripId,
-          creatorUid: 'user_duc_pham',
-          title: `${days}-day trip to ${destination}`,
-          destinations: [destination],
-          startDate: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-          endDate: new Date(Date.now() + (days - 1) * 86400000).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-          budgetTotal: budget,
-          spentTotal: state.activeTrip?.spentTotal ?? 0,
-          joinedMemberUids: state.activeTrip?.joinedMemberUids ?? ['user_duc_pham'],
-          activities: activities.map((activity) => ({ ...activity, tripId })),
-          isActive: true,
-          isSynced: false,
-          createdAt: Date.now(),
-        };
-        return { activeTrip: trip, trips: [trip, ...state.trips.filter((item) => item.id !== trip.id)], selectedDayIndex: 1 };
+      const activities = await generateAIItinerary.execute(destination, days, budget, preferences);
+      const currentTrip = get().activeTrip;
+      const tripId = currentTrip?.id ?? `trip_${Date.now()}`;
+      const currentUid = useAuthStore.getState().user?.uid ?? currentTrip?.creatorUid ?? 'user_duc_pham';
+      const start = startDate ? new Date(startDate) : new Date();
+      const endDate = new Date(start);
+      endDate.setDate(endDate.getDate() + days - 1);
+      const trip: TripPlan = {
+        id: tripId,
+        creatorUid: currentUid,
+        title: title?.trim() || `${days}-day trip to ${destination}`,
+        destinations: [destination],
+        startDate: start.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+        endDate: endDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+        budgetTotal: budget,
+        spentTotal: currentTrip?.spentTotal ?? 0,
+        joinedMemberUids: Array.from(new Set([...(currentTrip?.joinedMemberUids ?? []), currentUid])),
+        activities: activities.map((activity) => ({ ...activity, tripId })),
+        isActive: true,
+        isSynced: false,
+        createdAt: currentTrip?.createdAt ?? Date.now(),
       });
+      const savedTrip = await tripRepository.saveTrip(trip);
+      set((state) => ({
+        activeTrip: savedTrip,
+        trips: [savedTrip, ...state.trips.filter((item) => item.id !== savedTrip.id)],
+        selectedDayIndex: 1,
+      }));
     } finally {
       set({ isLoading: false });
     }
