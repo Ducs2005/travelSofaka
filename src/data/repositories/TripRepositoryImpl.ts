@@ -2,13 +2,18 @@ import { ITripRepository } from '@/domain/repositories/trip_repository';
 import { TripPlan } from '@/domain/entities/trip';
 import { Activity } from '@/domain/entities/activity';
 import { TripLocalDataSource } from '../datasources/local/sqlite/TripLocalDataSource';
+import { SyncQueueLocalDataSource } from '../datasources/local/sqlite/SyncQueueLocalDataSource';
 import { TripRemoteDataSource } from '../datasources/remote/firestore/TripRemoteDataSource';
+import { isConnectivityError } from '../datasources/remote/firestore/firestoreError';
 import { generateGeminiItinerary } from '../datasources/remote/ai/gemini_itinerary';
 
 const remote = new TripRemoteDataSource();
 
 export class TripRepositoryImpl implements ITripRepository {
-  constructor(private readonly localDataSource: TripLocalDataSource = new TripLocalDataSource()) {}
+  constructor(
+    private readonly localDataSource: TripLocalDataSource = new TripLocalDataSource(),
+    private readonly syncQueue: SyncQueueLocalDataSource = new SyncQueueLocalDataSource()
+  ) {}
 
   async getActiveTrip(): Promise<TripPlan | null> {
     // Thử lấy từ local trước (offline-first)
@@ -89,7 +94,7 @@ export class TripRepositoryImpl implements ITripRepository {
       const created = await remote.createTrip(tripData);
       await this.localDataSource.saveTrip(created);
       return created;
-    } catch (_e) {
+    } catch (error) {
       // Offline: tạo local trước
       const newTrip: TripPlan = {
         ...tripData,
@@ -98,6 +103,11 @@ export class TripRepositoryImpl implements ITripRepository {
         isSynced: false,
       };
       await this.localDataSource.saveTrip(newTrip);
+
+      // OFF-03: xếp vào sync_queue để Sync Engine đẩy lên Firestore khi có mạng lại
+      if (isConnectivityError(error)) {
+        await this.syncQueue.enqueue('trips', 'INSERT', newTrip);
+      }
       return newTrip;
     }
   }
@@ -117,9 +127,14 @@ export class TripRepositoryImpl implements ITripRepository {
       await remote.upsertTrip(syncedTrip);
       await this.localDataSource.saveTrip(syncedTrip);
       return syncedTrip;
-    } catch (_error) {
+    } catch (error) {
       const localTrip = { ...trip, isSynced: false };
       await this.localDataSource.saveTrip(localTrip);
+
+      // OFF-03: xếp bản cập nhật chuyến đi vào sync_queue (Last-Write-Wins theo createdAt)
+      if (isConnectivityError(error)) {
+        await this.syncQueue.enqueue('trips', 'UPDATE', localTrip);
+      }
       return localTrip;
     }
   }

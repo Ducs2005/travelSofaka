@@ -9,18 +9,12 @@ import { formatRelativeTime } from '@/core/utils/relativeTime';
 import { PostLocalDataSource } from '../datasources/local/sqlite/PostLocalDataSource';
 import { SyncQueueLocalDataSource } from '../datasources/local/sqlite/SyncQueueLocalDataSource';
 import { PostRemoteDataSource } from '../datasources/remote/firestore/PostRemoteDataSource';
+import { isConnectivityError } from '../datasources/remote/firestore/firestoreError';
 import { PostStorageDataSource } from '../datasources/remote/storage/PostStorageDataSource';
 import { mergeFeedPosts } from './feedMerge';
 
 function randomSuffix(): string {
   return Math.random().toString(36).slice(2, 7);
-}
-
-/** Lỗi do thiết bị mất mạng (khác với lỗi quyền / tài liệu không tồn tại) */
-function isConnectivityError(error: unknown): boolean {
-  const code = (error as { code?: string } | null)?.code;
-  if (!code) return true;
-  return code === 'unavailable' || code === 'failed-precondition' || code === 'deadline-exceeded';
 }
 
 /**

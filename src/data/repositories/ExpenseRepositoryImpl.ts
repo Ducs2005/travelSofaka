@@ -2,7 +2,9 @@ import { ExpenseItem } from '@/domain/entities/expense';
 import { IExpenseRepository, OCRScanResult } from '@/domain/repositories/expense_repository';
 import { ParseReceiptTextUseCase } from '@/domain/usecases/ocr/ParseReceiptTextUseCase';
 import { ExpenseLocalDataSource } from '../datasources/local/sqlite/ExpenseLocalDataSource';
+import { SyncQueueLocalDataSource } from '../datasources/local/sqlite/SyncQueueLocalDataSource';
 import { ExpenseRemoteDataSource } from '../datasources/remote/firestore/ExpenseRemoteDataSource';
+import { isConnectivityError } from '../datasources/remote/firestore/firestoreError';
 import { IOCRDataSource, MLKitOCRDataSource } from '../datasources/remote/ocr/MLKitOCRDataSource';
 
 const remote = new ExpenseRemoteDataSource();
@@ -15,6 +17,7 @@ export class ExpenseRepositoryImpl implements IExpenseRepository {
     private readonly localDataSource: ExpenseLocalDataSource = new ExpenseLocalDataSource(),
     ocrDataSource: IOCRDataSource = new MLKitOCRDataSource(),
     parseReceiptUseCase: ParseReceiptTextUseCase = new ParseReceiptTextUseCase(),
+    private readonly syncQueue: SyncQueueLocalDataSource = new SyncQueueLocalDataSource(),
   ) {
     this.ocrDataSource = ocrDataSource;
     this.parseReceiptUseCase = parseReceiptUseCase;
@@ -77,7 +80,7 @@ export class ExpenseRepositoryImpl implements IExpenseRepository {
       const saved = await remote.addExpense(expenseData);
       await this.localDataSource.saveExpense(saved);
       return saved;
-    } catch (_error) {
+    } catch (error) {
       const localExpense: ExpenseItem = {
         ...expenseData,
         id: `exp_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
@@ -85,6 +88,11 @@ export class ExpenseRepositoryImpl implements IExpenseRepository {
         isSynced: false,
       };
       await this.localDataSource.saveExpense(localExpense);
+
+      // OFF-03: mất mạng thì xếp vào sync_queue để Sync Engine đẩy lên Firestore khi có mạng lại
+      if (isConnectivityError(error)) {
+        await this.syncQueue.enqueue('expenses', 'INSERT', localExpense);
+      }
       return localExpense;
     }
   }
