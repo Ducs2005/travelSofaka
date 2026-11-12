@@ -23,3 +23,6 @@ web-build/
 # OCR cache
 *.traineddata
 
+
+# Báo cáo dạng .docx (sinh ra từ .md, không commit)
+docs/report/*.docx
