@@ -130,3 +130,32 @@ npm test            # bộ test OCR & ngân sách của Tú (35 assertion)
 - Ảnh trong `sync_queue` trỏ tới file cache của `expo-image-manipulator`; nếu hệ điều hành dọn cache
   trước khi có mạng lại thì lần đồng bộ đó thất bại và bản ghi bị loại sau 5 lần thử.
 - Danh sách bài viết trong cache không tự xoá bài đã bị xoá trên Firestore cho tới lần đọc online kế tiếp.
+
+---
+
+## 8. Thiết lập Firebase (bắt buộc trước khi demo)
+
+1. **Biến môi trường:** copy `.env.example` → `.env` và điền 7 khóa `EXPO_PUBLIC_FIREBASE_*`.
+   File `.env` đã nằm trong `.gitignore`, không commit. Sau khi sửa `.env` phải khởi động lại
+   Metro (`npx expo start --clear`) vì biến được inline lúc bundle.
+
+2. **Firestore rules:** `firebase deploy --only firestore:rules` (file nguồn: `src/core/firebase/firestore.rules`).
+
+3. **Firebase Storage phải được bật trong Console** (Build → Storage → *Get Started*).
+   Nếu chưa bật, bucket không tồn tại và mọi lần upload ảnh đều thất bại
+   (bài viết sẽ nằm mãi ở trạng thái “Chờ đồng bộ” rồi bị loại sau 5 lần thử).
+   Sau khi bật, deploy rules: `firebase deploy --only storage` (file nguồn: `src/core/firebase/storage.rules`).
+
+4. **Kiểm tra nhanh bằng Node** (không cần mở app):
+   ```bash
+   node --input-type=module -e "
+   const key='<API_KEY>';
+   const r = await fetch('https://firestore.googleapis.com/v1/projects/<PROJECT_ID>/databases/(default)/documents/posts?key='+key);
+   console.log('Firestore:', r.status);
+   const s = await fetch('https://storage.googleapis.com/storage/v1/b/<STORAGE_BUCKET>');
+   console.log('Storage bucket:', s.status);
+   "
+   ```
+   - Firestore trả `403 PERMISSION_DENIED` → project sống và rules đã deploy (đúng).
+   - Storage bucket trả `404 The specified bucket does not exist` → **chưa bật Storage**.
+

@@ -1,0 +1,18 @@
+rules_version = '2';
+
+// Firebase Storage rules cho Travelsofaka (TripMate)
+// Upload ảnh bài viết: posts/{authorUid}/{timestamp}.jpg
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /posts/{authorUid}/{fileName} {
+      // Ảnh bảng tin hiển thị công khai (URL có token tải xuống)
+      allow read: if true;
+      // Chỉ chủ bài viết được ghi vào thư mục của mình, ảnh < 5MB và phải là ảnh
+      allow write: if request.auth != null
+                   && request.auth.uid == authorUid
+                   && request.resource.size < 5 * 1024 * 1024
+                   && request.resource.contentType.matches('image/.*');
+      allow delete: if request.auth != null && request.auth.uid == authorUid;
+    }
+  }
+}
