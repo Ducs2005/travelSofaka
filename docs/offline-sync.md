@@ -10,8 +10,8 @@ Dùng cho báo cáo Sprint 3 và phần demo trên thiết bị.
 | Mã task | Nội dung | Trạng thái |
 |:--|:--|:--|
 | `SOC-01` | Screen 02 — Home Feed: header thương hiệu, Active Trip banner, danh sách bài đăng, like/comment | Hoàn thành — dữ liệu thật từ `socialStore` |
-| `SOC-02` | Screen 09 — Create Post: chọn ảnh từ máy, gắn Destination Tag, caption, xuất bản | Hoàn thành — ImagePicker + upload Storage |
-| `SOC-03` | Nén ảnh client, upload Firebase Storage, lưu Firestore `posts`, logic Like/Comment | Hoàn thành |
+| `SOC-02` | Screen 09 — Create Post: chọn ảnh từ máy, gắn Destination Tag, caption, xuất bản | Hoàn thành — ImagePicker + upload Cloudinary |
+| `SOC-03` | Nén ảnh client, upload Cloudinary, lưu Firestore `posts`, logic Like/Comment | Hoàn thành |
 | `OFF-01` | Schema SQLite: `trips`, `activities`, `expenses`, `posts_cache`, `sync_queue` | Hoàn thành (Sprint 1), bổ sung cột `is_synced` cho `posts_cache` |
 | `OFF-02` | Repository đọc/ghi Offline-First, ghi offline đánh dấu `is_synced = 0` | Hoàn thành |
 | `OFF-03` | Sync Engine: NetInfo → quét `sync_queue` → đẩy lên Firestore → `is_synced = 1` | Hoàn thành |
@@ -30,7 +30,7 @@ socialStore (Zustand)
 UseCases: GetFeedPosts / CreatePost / ToggleLikePost / GetPostComments / AddComment
       │
       ▼
-PostRepositoryImpl  ──────────────►  Firebase Storage   (nén ảnh + upload)
+PostRepositoryImpl  ──────────────►  Cloudinary         (nén ảnh + upload)
       │                                    │
       │                                    ▼
       ├──────────────►  Firestore `posts` (+ subcollection `comments`)
@@ -47,7 +47,7 @@ SQLite: posts_cache  +  sync_queue  ◄──── SyncEngine (NetInfo) ──�
 
 ### Ghi (khi đăng bài)
 1. Nén ảnh bằng `expo-image-manipulator` (rộng tối đa 1080px, JPEG quality 0.7).
-2. Upload lên Firebase Storage (`posts/{uid}/{timestamp}.jpg`) → lấy `downloadURL`.
+2. Upload lên Cloudinary (unsigned upload preset) → lấy `secure_url`.
 3. Ghi Firestore `posts`; thành công → lưu cache với `is_synced = 1`.
 4. Nếu upload/Firestore lỗi (ngoại tuyến) → lưu `posts_cache` với `is_synced = 0` và
    `enqueue('posts', 'INSERT', {...post, localImageUri})`.
@@ -91,7 +91,7 @@ lỗi quyền (`permission-denied`) hay tài liệu không tồn tại thì th�
 | Tầng | File |
 |:--|:--|
 | Domain | `src/domain/entities/post.ts`, `src/domain/entities/sync.ts`, `src/domain/repositories/post_repository.ts`, `src/domain/repositories/sync_repository.ts`, `src/domain/usecases/post/PostUseCases.ts` |
-| Data | `src/data/datasources/local/sqlite/PostLocalDataSource.ts`, `.../SyncQueueLocalDataSource.ts`, `src/data/datasources/remote/storage/PostStorageDataSource.ts`, `src/data/datasources/remote/firestore/PostRemoteDataSource.ts`, `src/data/datasources/sync/SyncEngine.ts`, `.../drainSyncQueue.ts`, `src/data/repositories/PostRepositoryImpl.ts`, `.../feedMerge.ts` |
+| Data | `src/data/datasources/local/sqlite/PostLocalDataSource.ts`, `.../SyncQueueLocalDataSource.ts`, `src/data/datasources/remote/storage/PostImageStorage.ts`, `.../CloudinaryStorageDataSource.ts`, `.../imageCompression.ts`, `src/data/datasources/remote/firestore/PostRemoteDataSource.ts`, `src/data/datasources/sync/SyncEngine.ts`, `.../drainSyncQueue.ts`, `src/data/repositories/PostRepositoryImpl.ts`, `.../feedMerge.ts` |
 | Presentation | `src/presentation/screens/feed/HomeScreen.tsx` (Screen 02), `src/presentation/screens/feed/CreatePostScreen.tsx` (Screen 09), `src/presentation/components/social/CommentSheet.tsx`, `src/presentation/stores/socialStore.ts` |
 | Hạ tầng | `src/core/utils/relativeTime.ts`, `src/core/firebase/firestore.rules` (rule cho `likesCount` / `commentsCount`), `App.tsx` (khởi động Sync Engine) |
 | Kiểm thử | `scripts/test_offline_sync.ts` → `npm run test:offline` |
@@ -104,11 +104,11 @@ lỗi quyền (`permission-denied`) hay tài liệu không tồn tại thì th�
 2. **Đăng nhập** (Screen 01) để có `uid` khớp `authorUid` — Firestore rules yêu cầu điều này.
 3. Tab **Home**: bảng tin tải từ Firestore; kéo xuống để refresh; thả tim; bấm số comment để mở khung bình luận.
 4. **+ Create Post**: chọn ảnh từ thư viện (hoặc chụp), nhập caption → **Publish**.
-   Ảnh được nén 1080px rồi upload Storage; bài viết xuất hiện ngay đầu bảng tin.
+   Ảnh được nén 1080px rồi upload Cloudinary; bài viết xuất hiện ngay đầu bảng tin.
 5. **Demo ngoại tuyến:** bật Chế độ trên máy bay → tạo bài viết mới → bài hiện ngay với nhãn **“Chờ đồng bộ”**,
    banner vàng báo *“1 mục chờ đồng bộ lên Firestore”*.
 6. Tắt Chế độ trên máy bay → Sync Engine tự đẩy hàng đợi; bấm **“Đồng bộ ↻”** để chủ động kiểm tra.
-   Nhãn “Chờ đồng bộ” biến mất, ảnh trên Firestore là URL Storage thật.
+   Nhãn “Chờ đồng bộ” biến mất, ảnh trên Firestore là URL Cloudinary thật.
 
 ### Kiểm thử tự động
 ```bash
@@ -141,10 +141,11 @@ npm test            # bộ test OCR & ngân sách của Tú (35 assertion)
 
 2. **Firestore rules:** `firebase deploy --only firestore:rules` (file nguồn: `src/core/firebase/firestore.rules`).
 
-3. **Firebase Storage phải được bật trong Console** (Build → Storage → *Get Started*).
-   Nếu chưa bật, bucket không tồn tại và mọi lần upload ảnh đều thất bại
-   (bài viết sẽ nằm mãi ở trạng thái “Chờ đồng bộ” rồi bị loại sau 5 lần thử).
-   Sau khi bật, deploy rules: `firebase deploy --only storage` (file nguồn: `src/core/firebase/storage.rules`).
+3. **Tài khoản Cloudinary** (miễn phí 25GB, không cần thẻ): Settings → Upload → *Add upload preset* →
+   Signing mode **Unsigned** → điền `EXPO_PUBLIC_CLOUDINARY_CLOUD_NAME` và
+   `EXPO_PUBLIC_CLOUDINARY_UPLOAD_PRESET` vào `.env`.
+   Nếu thiếu 2 biến này, mọi lần upload ảnh đều thất bại (bài viết nằm ở trạng thái “Chờ đồng bộ”
+   rồi bị loại sau 5 lần thử).
 
 4. **Kiểm tra nhanh bằng Node** (không cần mở app):
    ```bash
@@ -152,10 +153,10 @@ npm test            # bộ test OCR & ngân sách của Tú (35 assertion)
    const key='<API_KEY>';
    const r = await fetch('https://firestore.googleapis.com/v1/projects/<PROJECT_ID>/databases/(default)/documents/posts?key='+key);
    console.log('Firestore:', r.status);
-   const s = await fetch('https://storage.googleapis.com/storage/v1/b/<STORAGE_BUCKET>');
-   console.log('Storage bucket:', s.status);
+   const s = await fetch('https://api.cloudinary.com/v1_1/<CLOUD_NAME>/image/upload', { method: 'POST' });
+   console.log('Cloudinary:', s.status);
    "
    ```
    - Firestore trả `403 PERMISSION_DENIED` → project sống và rules đã deploy (đúng).
-   - Storage bucket trả `404 The specified bucket does not exist` → **chưa bật Storage**.
+   - Cloudinary trả `400`/`401` cho POST rỗng → cloud name đúng và endpoint truy cập được.
 

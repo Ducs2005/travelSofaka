@@ -11,7 +11,8 @@
   * **Framework & Ngôn ngữ:** React Native, Expo SDK, TypeScript.
   * **Kiến trúc:** Clean Architecture (Domain, Data, Presentation).
   * **Quản lý trạng thái:** Zustand.
-  * **Cơ sở dữ liệu & Backend:** Firebase Authentication, Cloud Firestore, Firebase Storage.
+  * **Cơ sở dữ liệu & Backend:** Firebase Authentication, Cloud Firestore.
+  * **Lưu trữ ảnh (Cloud CDN):** Cloudinary — nén ảnh trên client rồi upload lấy URL.
   * **CSDL cục bộ (Offline-First):** SQLite qua `expo-sqlite`.
   * **Trí tuệ nhân tạo (AI):** LLM API (Google Gemini / OpenAI) & Google ML Kit Text Recognition (On-device OCR).
   * **Giao diện & UI System:** Tailwind CSS / NativeWind, Material Design 3, Figma Prototype.
@@ -26,7 +27,7 @@
 | 1 | **Trần Quang Việt** | **Core Architect & Auth / Profile / DevOps** | • Screen 01: Login / Sign Up<br>• Screen 10: User Profile | • Khởi tạo Base Clean Architecture, Navigation & Design System.<br>• Firebase Authentication & Quản lý hồ sơ người dùng.<br>• Thiết lập pipeline CI/CD (GitHub Actions, Fastlane). |
 | 2 | **Phạm Ngọc Đức** | **Team Lead & AI Travel Planner** | • Screen 03: Explore Destinations<br>• Screen 04: Destination Details<br>• Screen 05: Trip Planner | • Quản lý tiến độ dự án, tài liệu & duyệt Pull Request.<br>• Tích hợp LLM API sinh lịch trình du lịch tự động dạng JSON.<br>• Nghiệp vụ khám phá điểm đến & sắp xếp hoạt động theo ngày. |
 | 3 | **Lê Hữu Anh Tú** | **Expense & AI OCR Engineer** | • Screen 06: Trip Details & Expense<br>• Screen 07: Receipt Scanner<br>• Screen 08: OCR Expense Review | • Tích hợp Google ML Kit Text Recognition (On-device OCR).<br>• Thuật toán Regex bóc tách thông tin hóa đơn (quán, ngày, tiền).<br>• Quản lý ngân sách nhóm & tính toán phân chia chi phí (split bill). |
-| 4 | **Nguyễn Tùng Lâm** | **Social Feed & Offline Sync Engine** | • Screen 02: Home Feed<br>• Screen 09: Create Travel Post | • Tích hợp Firebase Storage (nén và tải lên ảnh đa phương tiện).<br>• Bảng tin mạng xã hội, tương tác like, comment.<br>• Thiết kế SQLite Database & Engine đồng bộ ngoại tuyến hai chiều. |
+| 4 | **Nguyễn Tùng Lâm** | **Social Feed & Offline Sync Engine** | • Screen 02: Home Feed<br>• Screen 09: Create Travel Post | • Tích hợp Cloudinary (nén và tải lên ảnh đa phương tiện).<br>• Bảng tin mạng xã hội, tương tác like, comment.<br>• Thiết kế SQLite Database & Engine đồng bộ ngoại tuyến hai chiều. |
 
 ---
 
@@ -49,7 +50,7 @@
    │                               DATA LAYER                               │
    │  [SQLite (expo-sqlite)] ◄────── Lâm: Sync ──────► [Firebase Firestore] │
    │  [Google ML Kit OCR] ◄─ Tú           Đức ─► [LLM API (Gemini/OpenAI)]  │
-   │  [Firebase Auth] ◄─ Việt             Lâm ─► [Firebase Storage]        │
+   │  [Firebase Auth] ◄─ Việt             Lâm ─► [Cloudinary CDN]          │
    └────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -103,7 +104,7 @@
 |---|---|---|---|
 | `SOC-01` | **UI Screen 02: Home Feed** | Screen 02 (`travelsofaka_ui.html`) | Header thương hiệu, Active Trip banner, danh sách bài đăng từ cộng đồng (ảnh, tag địa điểm, caption, tác giả, nút tương tác like/comment). |
 | `SOC-02` | **UI Screen 09: Create Travel Post** | Screen 09 (`travelsofaka_ui.html`) | Giao diện đăng bài du lịch: Chọn ảnh từ máy, gắn thẻ địa điểm (Destination Tag), nhập caption và xuất bản bài viết lên cộng đồng. |
-| `SOC-03` | **Tích hợp Firebase Storage & Social Feed Store** | `src/presentation/stores/socialStore.ts` | Nén ảnh trên client trước khi upload lên Firebase Storage; lưu bài viết vào Firestore collection `posts`; logic tương tác Like / Comment. |
+| `SOC-03` | **Tích hợp Cloudinary & Social Feed Store** | `src/presentation/stores/socialStore.ts` | Nén ảnh trên client trước khi upload lên Cloudinary; lưu bài viết vào Firestore collection `posts`; logic tương tác Like / Comment. |
 | `OFF-01` | **Thiết kế Schema CSDL SQLite cục bộ** | `src/data/datasources/local/sqlite/` | Tạo các bảng SQLite qua `expo-sqlite`: `trips`, `activities`, `expenses`, `posts_cache`, `sync_queue`. |
 | `OFF-02` | **Xây dựng Repository đọc ghi Offline-First** | `src/data/repositories/` | Ưu tiên đọc dữ liệu tức thì từ SQLite. Khi thiết bị ngoại tuyến, các thao tác thêm/sửa/xóa vẫn ghi thành công vào SQLite và đánh dấu `is_synced = 0`. |
 | `OFF-03` | **Engine đồng bộ dữ liệu (Sync Engine)** | `src/data/datasources/sync/` | Dùng `@react-native-community/netinfo` nhận diện khi có mạng: Quét bảng `sync_queue` và tuần tự đẩy dữ liệu lên Cloud Firestore, cập nhật `is_synced = 1`. |
@@ -122,7 +123,7 @@
 * **Trần Quang Việt:** Hoàn thành `AUTH-02`, `PROF-02`, `DEVOPS-01` (chạy thực tế đăng nhập Google/Email Firebase, quản trị CI/CD).
 * **Phạm Ngọc Đức:** Hoàn thành `AI-01`, `AI-02`, `PLAN-02` (gọi LLM API sinh JSON lịch trình, bind dữ liệu thật vào Day 1, Day 2...).
 * **Lê Hữu Anh Tú:** Hoàn thành `OCR-02`, `OCR-03`, `EXP-02` (kích hoạt ML Kit nhận diện ảnh thật, bóc tách chính xác số tiền và ngày, lưu chi phí).
-* **Nguyễn Tùng Lâm:** Hoàn thành `SOC-03`, `OFF-02` (upload ảnh lên Firebase Storage, load feed realtime, hoàn tất ghi offline vào SQLite).
+* **Nguyễn Tùng Lâm:** Hoàn thành `SOC-03`, `OFF-02` (upload ảnh lên Cloudinary, load feed realtime, hoàn tất ghi offline vào SQLite).
 
 ### 🔄 Sprint 3: Offline-First Sync, Kiểm thử & Đóng gói (Tuần 5 – Tuần 6)
 * **Lâm & Việt:** Hoàn thành `OFF-03` (hoàn thiện Sync Engine giữa SQLite và Firestore; xử lý xung đột dữ liệu).

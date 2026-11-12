@@ -12,7 +12,7 @@ Thành viên nhóm:
 | 1 | Phạm Ngọc Đức | | Team Lead & AI Travel Planner: Điều phối 3 sprint, review Pull Request, hoàn thiện luồng AI sinh lịch trình, kiểm thử tích hợp. |
 | 2 | Trần Quang Việt | | Core Architect & Auth/Profile: Khung Clean Architecture, Design System, Router 10 màn hình, Firebase Auth/Firestore, Screen 01 & 10. |
 | 3 | Lê Hữu Anh Tú | | Expense & AI OCR Engineer: Multi-tier OCR, bộ Regex Parser hóa đơn, chia bill, Screen 06/07/08, bộ 35 test OCR & ngân sách. |
-| 4 | Nguyễn Tùng Lâm | | Social Feed & Offline Sync Engine: Screen 02/09, Firebase Storage, Schema SQLite, Sync Engine, bộ 21 test offline, tài liệu kỹ thuật offline-first. |
+| 4 | Nguyễn Tùng Lâm | | Social Feed & Offline Sync Engine: Screen 02/09, Cloudinary + nén ảnh, Schema SQLite, Sync Engine, bộ 21 test offline, tài liệu kỹ thuật offline-first. |
 
 ---
 
@@ -30,7 +30,7 @@ Thành viên nhóm:
 | 06 | Trip Details & Expense | `screens/TripDetailsExpenseScreen.tsx` | Tú | `expenseStore` + SQLite `expenses` | Hoàn thành |
 | 07 | Receipt Scanner | `screens/ReceiptScannerScreen.tsx` | Tú | Camera + ML Kit / Cloud OCR | Hoàn thành |
 | 08 | OCR Expense Review | `screens/OCRExpenseReviewScreen.tsx` | Tú | ParseReceiptTextUseCase + chia bill | Hoàn thành |
-| 09 | Create Travel Post | `screens/feed/CreatePostScreen.tsx` | Lâm | ImagePicker + Firebase Storage + Firestore | Hoàn thành |
+| 09 | Create Travel Post | `screens/feed/CreatePostScreen.tsx` | Lâm | ImagePicker + Cloudinary + Firestore | Hoàn thành |
 | 10 | User Profile | `screens/profile/ProfileScreen.tsx` | Việt | Firestore `users` + `socialStore` | Hoàn thành |
 
 ### 1.2. Tỷ lệ hoàn thành theo module
@@ -41,7 +41,7 @@ Thành viên nhóm:
 | Auth & Profile | Đăng ký/đăng nhập Email, phiên đăng nhập, cập nhật hồ sơ, đăng xuất | **95%** | Google Sign-In mới ở mức giao diện (xem 6.2) |
 | Explore & AI Planner | Tìm kiếm/lọc điểm đến, chi tiết, tạo lịch trình bằng Gemini, sửa hoạt động theo ngày | **100%** | Cần `EXPO_PUBLIC_GEMINI_API_KEY` |
 | Expense & AI OCR | Quét hóa đơn (camera/thư viện), bóc tách Regex, chia bill, cảnh báo ngưỡng 80%/100% | **100%** | 35/35 assertion PASS |
-| Social Feed | Bảng tin, like/unlike, bình luận, tạo bài có ảnh, nén ảnh + Storage | **100%** | Cần bật bucket Storage (xem 3.3) |
+| Social Feed | Bảng tin, like/unlike, bình luận, tạo bài có ảnh, nén ảnh + Cloudinary | **100%** | Cần cloud name + upload preset (xem 3.3) |
 | Offline-First Sync | Schema SQLite 5 bảng, repository offline-first, Sync Engine NetInfo → Firestore | **100%** | 21/21 assertion PASS |
 | DevOps & Release | GitHub Actions, Fastlane, ký số, APK/AAB | **20%** | Xem 3.3 — hạng mục chính còn lại của dự án |
 
@@ -54,10 +54,10 @@ Thành viên nhóm:
 | Lớp | Số file | Số dòng | Nội dung |
 |:---|:---:|:---:|:---|
 | `src/domain` | 23 | 959 | Entities, repository interfaces, use cases (không phụ thuộc React Native) |
-| `src/data` | 24 | 1.716 | SQLite, Firestore, Storage, AI, OCR, repositories |
+| `src/data` | 27 | 1.790 | SQLite, Firestore, Cloudinary, AI, OCR, repositories |
 | `src/presentation` | 34 | 6.698 | 10 màn hình, base components, 5 store Zustand, router |
 | `src/core` | 6 | 267 | Theme, Firebase config, tiện ích thời gian |
-| **Tổng** | **87** | **9.640** | + `scripts/` (2 bộ test), `docs/`, `report/` |
+| **Tổng** | **90** | **9.714** | + `scripts/` (2 bộ test), `docs/`, `report/` |
 
 ### 2.2. Công nghệ sử dụng (phiên bản thực tế trong `package.json`)
 
@@ -65,7 +65,8 @@ Thành viên nhóm:
 |:---|:---|:---|
 | Nền tảng | Expo SDK / React Native / React / TypeScript | 58.0.23 / 0.88.1 / 19.3.0 / 6.0.3 |
 | Trạng thái | Zustand | 5.0.3 |
-| Backend | Firebase (Auth, Firestore, Storage) | 13.2.0 |
+| Backend | Firebase (Auth, Firestore) | 13.2.0 |
+| Lưu trữ ảnh | Cloudinary REST API (unsigned upload preset) | — |
 | CSDL cục bộ | expo-sqlite | 58.0.15 |
 | Đồng bộ ngoại tuyến | @react-native-community/netinfo | 12.0.1 |
 | Ảnh | expo-image-picker / expo-image-manipulator | 58.0.10 / 58.0.16 |
@@ -122,7 +123,7 @@ Nội dung `eas.json` cần bổ sung:
 
 | # | Hạng mục | Trạng thái | Việc cần làm |
 |:---:|:---|:---:|:---|
-| 1 | Bật bucket Firebase Storage | **Chưa** (bucket trả HTTP 404) | Console → Storage → *Get Started*; sau đó `firebase deploy --only storage` |
+| 1 | Tài khoản Cloudinary + unsigned upload preset | **Chưa** | Tạo tài khoản miễn phí (25GB, không cần thẻ) → Settings → Upload → *Add upload preset* (Unsigned) → điền 2 biến `EXPO_PUBLIC_CLOUDINARY_*` |
 | 2 | Deploy Firestore rules | **Đã deploy** (truy vấn trả `403 PERMISSION_DENIED` đúng như thiết kế) | Duy trì file `src/core/firebase/firestore.rules` |
 | 3 | Bộ icon & splash | **Chưa** — 4 file trong `assets/` chỉ 70 byte (placeholder) | Thay bằng PNG 1024×1024 (icon), 288×288 (adaptive), splash theo hướng dẫn Expo |
 | 4 | `eas.json` | **Chưa có** | Thêm file ở mục 3.2 |
@@ -142,7 +143,7 @@ Nội dung `eas.json` cần bổ sung:
 | 0:30 – 1:30 | Screen 03 → 05 | Tìm "Đà Nẵng" → chọn điểm đến → nhập 3 ngày, ngân sách 6.000.000đ → **Generate AI Itinerary** | Kết quả là JSON chuẩn từ Gemini, tự tách thành `Activity` theo từng ngày, sửa/xoá được |
 | 1:30 – 2:30 | Screen 06 → 07 → 08 | Mở chuyến đi → **Scan Receipt** → chụp/chọn hóa đơn → xem thông tin bóc tách → lưu | Multi-tier OCR, thanh ngân sách đổi màu theo ngưỡng 80%/100% |
 | 2:30 – 3:30 | Screen 02 | Cuộn bảng tin, thả tim, mở bình luận và gửi 1 bình luận | Like/Comment ghi thẳng Firestore, `CommentSheet` |
-| 3:30 – 4:15 | Screen 09 | **+ Create Post** → chọn ảnh → nhập caption → **Publish** | Nén 1080px/quality 0.7 rồi upload Storage, bài hiện ngay đầu bảng tin |
+| 3:30 – 4:15 | Screen 09 | **+ Create Post** → chọn ảnh → nhập caption → **Publish** | Nén 1080px/quality 0.7 rồi upload Cloudinary, bài hiện ngay đầu bảng tin |
 | 4:15 – 5:00 | Screen 02 | **Bật Chế độ trên máy bay** → tạo bài mới → bài hiện nhãn "Chờ đồng bộ" → **tắt máy bay** → banner tự xử lý | Điểm nhấn kỹ thuật: Offline-First + Sync Engine NetInfo |
 
 **Phương án dự phòng khi mất mạng/ lỗi dịch vụ:** demo offline trước (bước 5) để chứng minh cache + hàng đợi; dùng dữ liệu mẫu có sẵn trong `posts_cache` và `trips`; nếu Gemini lỗi, dùng lịch trình đã sinh sẵn trong chuyến đi mẫu.
@@ -182,7 +183,7 @@ Nội dung `eas.json` cần bổ sung:
 | 4 | Bộ icon/splash còn là placeholder 70 byte | Không thể phát hành lên store | Thay asset thật trước khi build Release |
 | 5 | Chưa có CI/CD, Fastlane, `eas.json` | Đóng gói thủ công, dễ sai sót | Xem mục 3.3 |
 | 6 | AI và Cloud OCR cần Internet + API key | Mất key hoặc hết hạn mức thì tính năng AI/OCR dừng | Bổ sung key dự phòng + thông báo lỗi thân thiện (đã có ở Screen 05) |
-| 7 | Firebase Storage cần bật bucket | Upload ảnh thất bại cho tới khi bật | Bật Console + deploy `storage.rules` |
+| 7 | Cloudinary phụ thuộc hạn mức tài khoản ngoài (25 credit/tháng) | Hết hạn mức thì upload ảnh lỗi | Theo dõi usage; adapter Firebase Storage là phương án thay thế nếu nâng Blaze |
 
 ### 6.3. Bài học kinh nghiệm
 

@@ -12,7 +12,7 @@ Thành viên nhóm:
 | 1 | Phạm Ngọc Đức | | Team Lead & AI Travel Planner: Hoàn thiện luồng AI sinh lịch trình (Gemini), kiểm thử tích hợp luồng AI → chuyến đi, merge nhánh `trip-ai-planner` vào `dev`. |
 | 2 | Trần Quang Việt | | Core Architect & Auth/Profile: Firebase Auth + Firestore, hoàn thiện Screen 10, phối hợp thiết kế Sync Engine và review Pull Request. |
 | 3 | Lê Hữu Anh Tú | | Expense & AI OCR Engineer: Multi-tier OCR (ML Kit → Cloud Vision → offline), ParseReceiptTextUseCase, Screen 06/07/08, merge nhánh `expense-mlkit-ocr` vào `dev`. |
-| 4 | Nguyễn Tùng Lâm | | Social Feed & Offline Sync Engine: **Chủ trì Milestone 3** — hoàn thiện Screen 02/09, Firebase Storage (nén ảnh + upload), Schema SQLite, Sync Engine NetInfo → Firestore, bộ kiểm thử offline. |
+| 4 | Nguyễn Tùng Lâm | | Social Feed & Offline Sync Engine: **Chủ trì Milestone 3** — hoàn thiện Screen 02/09, Cloudinary (nén ảnh + upload), Schema SQLite, Sync Engine NetInfo → Firestore, bộ kiểm thử offline. |
 
 ---
 
@@ -33,10 +33,14 @@ Thành viên nhóm:
 | Auth & Profile (Việt) | Screen 01, 10; Firebase Auth + Firestore `users` | 70% | **100%** |
 | Explore & AI Planner (Đức) | Screen 03, 04, 05; Gemini `gemini-2.5-flash` sinh JSON lịch trình | 80% | **100%** |
 | Expense & AI OCR (Tú) | Screen 06, 07, 08; ML Kit + OCR Regex Parser + chia bill | 80% | **100%** |
-| Social Feed & Offline Sync (Lâm) | Screen 02, 09; Firebase Storage; SQLite; Sync Engine | 85% | **100%** |
+| Social Feed & Offline Sync (Lâm) | Screen 02, 09; Cloudinary; SQLite; Sync Engine | 85% | **100%** |
 | DevOps — CI/CD & Fastlane (Việt) | GitHub Actions + Fastlane | 0% | Chưa triển khai (chuyển sang Report 4) |
 
 Điểm khác biệt cốt lõi so với Milestone 2: **không còn màn hình nào dùng dữ liệu tĩnh (mock)**. Toàn bộ 10 màn hình đọc/ghi dữ liệu thật qua repository, và mọi thao tác ghi đều đi qua CSDL cục bộ trước khi đồng bộ đám mây.
+
+### 1.3. Điều chỉnh phạm vi kỹ thuật so với Report 1
+
+Theo thông báo của đề bài, phần **lưu trữ ảnh dùng Cloudinary** (Report 1 ghi là Firebase Storage). Lý do kỹ thuật: Firebase Storage hiện yêu cầu project ở gói Blaze, trong khi Cloudinary miễn phí 25GB và không cần thẻ thanh toán. Kiến trúc đã tách cổng `PostImageStorage` nên việc thay nhà cung cấp chỉ ảnh hưởng một adapter; phần còn lại của `SOC-03` (nén ảnh trên client, lưu Firestore `posts`, like/comment) giữ nguyên.
 
 ---
 
@@ -103,7 +107,7 @@ async function migratePostsCache(db: SQLite.SQLiteDatabase): Promise<void> {
                              │                       │
                   ┌──────────▼─────────┐   ┌─────────▼──────────┐
                   │ SQLite posts_cache  │   │ Firestore `posts`  │
-                  │ (trả kết quả NGAY)  │   │ + Storage (ảnh)    │
+                  │ (trả kết quả NGAY)  │   │ + Cloudinary (ảnh)  │
                   └──────────┬─────────┘   └─────────┬──────────┘
                              │                       │
                              └──────► mergeFeedPosts ◄──┘
@@ -133,7 +137,7 @@ export function mergeFeedPosts(cached: TravelPost[], remote: TravelPost[]): Trav
 | Domain | `usecases/post/PostUseCases.ts` | `GetFeedPosts`, `CreatePost`, `ToggleLikePost`, `GetPostComments`, `AddComment` |
 | Data | `datasources/local/sqlite/PostLocalDataSource.ts` | Đọc/ghi `posts_cache`, `markSynced` |
 | Data | `datasources/local/sqlite/SyncQueueLocalDataSource.ts` | `enqueue`, `getPending`, `remove`, `incrementRetry`, `countPending` |
-| Data | `datasources/remote/storage/PostStorageDataSource.ts` | Nén ảnh + upload Firebase Storage |
+| Data | `datasources/remote/storage/PostImageStorage.ts`, `.../CloudinaryStorageDataSource.ts`, `.../imageCompression.ts` | Cổng lưu ảnh, nén ảnh và upload Cloudinary |
 | Data | `datasources/sync/SyncEngine.ts`, `drainSyncQueue.ts` | Đồng bộ hai chiều, chính sách retry |
 | Data | `repositories/PostRepositoryImpl.ts`, `repositories/feedMerge.ts` | Repository offline-first cho bảng tin |
 | Presentation | `screens/feed/HomeScreen.tsx`, `screens/feed/CreatePostScreen.tsx` | Screen 02 và Screen 09 |
@@ -222,8 +226,8 @@ Nén ảnh trên thiết bị — expo-image-manipulator
    • JPEG quality 0.7
         │ file JPEG ~150–350 KB (giảm 70–85% so với ảnh gốc 3–6 MB)
         ▼
-Upload Firebase Storage  posts/{authorUid}/{timestamp}.jpg
-        │ downloadURL
+Upload Cloudinary  api.cloudinary.com/v1_1/{cloud}/image/upload
+        │ secure_url
         ▼
 Firestore  posts/{id}  (caption, destinationTag, likesCount = 0, commentsCount = 0, createdAt)
 ```
@@ -279,7 +283,7 @@ Bộ test OCR Parser & Budget của Tú (11 nhóm tình huống, 35 assertion) v
 | 1 | Bật Chế độ trên máy bay, mở tab Home | Bảng tin hiển thị từ `posts_cache`, không có màn hình trắng |
 | 2 | Tạo bài viết mới có ảnh khi vẫn ngoại tuyến | Bài hiện ngay đầu bảng tin, nhãn "Chờ đồng bộ", banner vàng báo 1 mục chờ |
 | 3 | Tắt Chế độ trên máy bay, chờ 2–5 giây | Banner tự mất, nhãn "Chờ đồng bộ" biến mất |
-| 4 | Kiểm tra Firestore Console | Document mới có `imageUrl` là URL Storage thật |
+| 4 | Kiểm tra Firestore Console | Document mới có `imageUrl` là URL Cloudinary thật |
 | 5 | Tạo khoản chi khi ngoại tuyến (Screen 08) | Chi phí vẫn lưu vào SQLite, tổng ngân sách cập nhật |
 | 6 | Có mạng lại | Chi phí được đẩy lên collection `expenses` |
 
@@ -289,7 +293,7 @@ Bộ test OCR Parser & Budget của Tú (11 nhóm tình huống, 35 assertion) v
 |:---:|:---|:---|:---|
 | 1 | `npm run typecheck` fail tại `tripStore.ts` | Nhánh `trip-ai-planner` merge vào `dev` bị lệch một ký tự `});` → phải là `};` | Sửa cú pháp (1 ký tự), ghi nhận để tránh merge lỗi tương tự |
 | 2 | `typecheck` fail tại `TripPlannerScreen.tsx` | `params` kiểu `any` khiến `.map((item) => ...)` bị `implicit any` | Thêm kiểu `(item: string)` |
-| 3 | Upload ảnh luôn thất bại | Project chưa bật Firebase Storage → bucket không tồn tại (HTTP 404) | Ghi nhận là bước cấu hình bắt buộc; thêm `storage.rules` + hướng dẫn deploy vào repo |
+| 3 | Upload ảnh luôn thất bại | Project chưa bật Firebase Storage → bucket không tồn tại (HTTP 404) | Đề bài quy định dùng Cloudinary: tách cổng `PostImageStorage` + adapter Cloudinary, giữ adapter Firebase Storage làm dự phòng |
 | 4 | AI không sinh lịch trình | Thiếu `EXPO_PUBLIC_GEMINI_API_KEY` trong `.env` | Bổ sung vào danh sách biến môi trường bắt buộc (mục 6.3) |
 
 ---
@@ -300,29 +304,24 @@ Bộ test OCR Parser & Budget của Tú (11 nhóm tình huống, 35 assertion) v
 
 Bổ sung cho phép tương tác cộng đồng (mục 4.3) mà vẫn giữ nguyên tắc chỉ tác giả được sửa/xoá nội dung bài viết.
 
-### 6.2. Firebase Storage Rules (mới)
+### 6.2. Lưu trữ ảnh với Cloudinary
 
-```javascript
-// src/core/firebase/storage.rules
-service firebase.storage {
-  match /b/{bucket}/o {
-    match /posts/{authorUid}/{fileName} {
-      allow read: if true;                      // ảnh bảng tin
-      allow write: if request.auth != null
-                   && request.auth.uid == authorUid
-                   && request.resource.size < 5 * 1024 * 1024
-                   && request.resource.contentType.matches('image/.*');
-      allow delete: if request.auth != null && request.auth.uid == authorUid;
-    }
-  }
-}
-```
+Theo quy định của đề bài, ảnh bài viết được lưu trên Cloudinary; bảo mật nằm ở cấu hình **upload preset** phía Cloudinary chứ không phải file rules trong repo:
+
+| Hạng mục | Cách đặt |
+|:---|:---|
+| Upload preset | Settings → Upload → *Add upload preset* → Signing mode **Unsigned** (không nhúng API secret vào app) |
+| Giới hạn | Chỉ cho `jpg,png`, dung lượng ≤ 5MB, folder `travelsofaka/posts` |
+| Biến môi trường | `EXPO_PUBLIC_CLOUDINARY_CLOUD_NAME`, `EXPO_PUBLIC_CLOUDINARY_UPLOAD_PRESET` |
+
+File `src/core/firebase/storage.rules` vẫn được giữ để dùng cho adapter Firebase Storage (phương án dự phòng khi project nâng lên gói Blaze).
 
 ### 6.3. Biến môi trường (`.env`, không commit)
 
 | Biến | Bắt buộc | Dùng cho |
 |:---|:---:|:---|
-| `EXPO_PUBLIC_FIREBASE_*` (7 biến) | Có | Auth, Firestore, Storage |
+| `EXPO_PUBLIC_FIREBASE_*` (7 biến) | Có | Auth, Firestore |
+| `EXPO_PUBLIC_CLOUDINARY_CLOUD_NAME` + `EXPO_PUBLIC_CLOUDINARY_UPLOAD_PRESET` | Có (cho ảnh) | Upload ảnh của Screen 09 |
 | `EXPO_PUBLIC_GEMINI_API_KEY` | Có (cho AI) | Sinh lịch trình Screen 05 |
 | `EXPO_PUBLIC_OCR_SPACE_API_KEY` | Không | Tầng dự phòng Cloud OCR của Screen 07 |
 
@@ -332,7 +331,8 @@ service firebase.storage {
 # Đã bổ sung firebase.json + .firebaserc (project "travelsofaka")
 npx firebase-tools login
 npx firebase-tools deploy --only firestore:rules
-npx firebase-tools deploy --only storage
+# (tuỳ chọn) chỉ khi dùng adapter Firebase Storage ở gói Blaze:
+# npx firebase-tools deploy --only storage
 ```
 
 ---
@@ -343,7 +343,7 @@ Milestone 3 hoàn thành đúng hạn phần việc được giao: cơ chế Off
 
 Các hạng mục chuyển sang Report 4:
 
-1. Bật bucket Firebase Storage và deploy rules (điều kiện để upload ảnh chạy thật).
+1. Tạo tài khoản Cloudinary + unsigned upload preset và điền 2 biến `EXPO_PUBLIC_CLOUDINARY_*` (điều kiện để upload ảnh chạy thật).
 2. Kiểm thử trên thiết bị thật (Android & iOS) theo bảng 5.4, ghi lại kết quả.
 3. Đóng gói Release: cấu hình EAS (`eas.json`), thay bộ icon/splash placeholder, xuất APK/AAB.
 4. Hoàn thiện `DEVOPS-01`: GitHub Actions chạy `typecheck` + test khi có Pull Request, Fastlane build APK.

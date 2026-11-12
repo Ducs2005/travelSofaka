@@ -11,9 +11,9 @@ export interface PostImageStorage {
 }
 
 /**
- * Chọn nhà cung cấp theo biến môi trường:
- * - Có `EXPO_PUBLIC_CLOUDINARY_CLOUD_NAME`  → Cloudinary (miễn phí 25GB, không cần thẻ)
- * - Không có                                → Firebase Storage (yêu cầu project ở gói Blaze)
+ * Đề bài quy định lưu trữ ảnh bằng Cloudinary, nên Cloudinary là nhà cung cấp chính.
+ * - Có `EXPO_PUBLIC_CLOUDINARY_CLOUD_NAME` → Cloudinary (miễn phí 25GB, không cần thẻ)
+ * - Không cấu hình                          → Firebase Storage (chỉ là adapter dự phòng, cần gói Blaze)
  */
 export function createPostImageStorage(): PostImageStorage {
   return process.env.EXPO_PUBLIC_CLOUDINARY_CLOUD_NAME
