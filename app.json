@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "Travelsofaka",
-    "slug": "travelsofaka",
+    "slug": "travel-sofaka",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -27,7 +27,22 @@
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
-      "expo-sqlite"
-    ]
+      "expo-sqlite",
+      [
+        "expo-image-picker",
+        {
+          "cameraPermission": "TripMate cần quyền camera để quét hóa đơn.",
+          "photosPermission": "TripMate cần quyền ảnh để chọn hóa đơn cần quét.",
+          "microphonePermission": false
+        }
+      ],
+      "expo-status-bar"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "fee0d3ab-dcc0-4642-9a8c-6e49a10fbfde"
+      }
+    },
+    "owner": "lhatu"
   }
 }

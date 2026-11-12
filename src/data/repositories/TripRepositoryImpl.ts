@@ -3,6 +3,7 @@ import { TripPlan } from '@/domain/entities/trip';
 import { Activity } from '@/domain/entities/activity';
 import { TripLocalDataSource } from '../datasources/local/sqlite/TripLocalDataSource';
 import { TripRemoteDataSource } from '../datasources/remote/firestore/TripRemoteDataSource';
+import { generateGeminiItinerary } from '../datasources/remote/ai/gemini_itinerary';
 
 const remote = new TripRemoteDataSource();
 
@@ -104,45 +105,30 @@ export class TripRepositoryImpl implements ITripRepository {
   async generateAIItinerary(
     destination: string,
     days: number,
-    _budget: number,
-    _preferences?: string
+    budget: number,
+    preferences?: string
   ): Promise<Activity[]> {
-    const generated: Activity[] = [];
-    for (let day = 1; day <= days; day++) {
-      generated.push(
-        {
-          id: `ai_act_${day}_1`,
-          tripId: 'temp_trip',
-          dayIndex: day,
-          time: '08:30 AM',
-          title: `Breakfast & Coffee at ${destination}`,
-          locationName: destination,
-          estimatedCost: 75000,
-        },
-        {
-          id: `ai_act_${day}_2`,
-          tripId: 'temp_trip',
-          dayIndex: day,
-          time: '02:00 PM',
-          title: `Sightseeing & Exploration Day ${day}`,
-          locationName: destination,
-          estimatedCost: 200000,
-        }
-      );
+    return generateGeminiItinerary(destination, days, budget, preferences ?? '');
+  }
+
+  async saveTrip(trip: TripPlan): Promise<TripPlan> {
+    try {
+      const syncedTrip = { ...trip, isSynced: true };
+      await remote.upsertTrip(syncedTrip);
+      await this.localDataSource.saveTrip(syncedTrip);
+      return syncedTrip;
+    } catch (_error) {
+      const localTrip = { ...trip, isSynced: false };
+      await this.localDataSource.saveTrip(localTrip);
+      return localTrip;
     }
-    return generated;
   }
 
   async saveActivities(tripId: string, activities: Activity[]): Promise<void> {
-    try {
-      await remote.saveActivities(tripId, activities);
-    } catch (_e) {
-      // offline: update local
-    }
     const trip = await this.getActiveTrip();
     if (trip && trip.id === tripId) {
       trip.activities = [...trip.activities, ...activities];
-      await this.localDataSource.saveTrip(trip);
+      await this.saveTrip(trip);
     }
   }
 }
