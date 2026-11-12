@@ -114,7 +114,7 @@ lỗi quyền (`permission-denied`) hay tài liệu không tồn tại thì th�
 ```bash
 npm run typecheck   # TypeScript strict — 0 lỗi
 npm run test:offline  # 21 assertion cho drain queue + merge feed + nhãn thời gian
-npm test            # bộ test OCR & ngân sách của Tú (35 assertion)
+npm run test:cloudinary # upload ảnh thật lên Cloudinary, in ra secure_url
 ```
 
 ---

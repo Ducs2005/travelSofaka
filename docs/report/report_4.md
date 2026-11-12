@@ -158,6 +158,7 @@ Nội dung `eas.json` cần bổ sung:
 | Offline-First Sync Engine (Lâm) | `npm run test:offline` | 21 | **21/21 PASS** |
 | TypeScript strict mode | `npm run typecheck` | — | **0 lỗi** |
 | Bundle Metro (Android) | `expo start` → `index.bundle` | — | **HTTP 200 · 8.31 MB · 898 module** |
+| Upload ảnh thật lên Cloudinary | `npm run test:cloudinary` | — | **200 OK · 190 KB · 1200×800** |
 | Nạp biến môi trường | log Metro | 7 biến | **`env: load .env` OK** |
 | Kiểm thử thiết bị thật (6 bước ở Report 3 – mục 5.4) | — | 6 | *Chờ chạy — điền kết quả trước khi nộp* |
 

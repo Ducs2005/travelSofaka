@@ -274,6 +274,7 @@ Bộ test OCR Parser & Budget của Tú (11 nhóm tình huống, 35 assertion) v
 |:---|:---|:---|
 | TypeScript strict mode | `npm run typecheck` | **0 lỗi** |
 | Bundle Android thật (Metro) | `expo start` → `index.bundle?platform=android` | **HTTP 200, 8.31 MB, 898 module** |
+| Upload ảnh thật lên Cloudinary | `npm run test:cloudinary` | **HTTP 200 · 190 KB · 1200×800 · có `secure_url`** |
 | Nạp biến môi trường | log Metro `env: load .env` | Đủ 7 biến `EXPO_PUBLIC_FIREBASE_*` được inline vào bundle |
 
 ### 5.4. Kịch bản kiểm thử ngoại tuyến trên thiết bị (dùng cho Report 4)

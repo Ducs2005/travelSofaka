@@ -9,7 +9,8 @@
     "web": "expo start --web",
     "typecheck": "tsc --noEmit",
     "test": "tsx scripts/test_ocr_and_budget.ts",
-    "test:offline": "tsx scripts/test_offline_sync.ts"
+    "test:offline": "tsx scripts/test_offline_sync.ts",
+    "test:cloudinary": "node scripts/test_cloudinary_upload.mjs"
   },
   "dependencies": {
     "@expo/vector-icons": "^15.0.2",
