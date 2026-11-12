@@ -35,7 +35,8 @@
           "photosPermission": "TripMate cần quyền ảnh để chọn hóa đơn cần quét.",
           "microphonePermission": false
         }
-      ]
+      ],
+      "expo-status-bar"
     ],
     "extra": {
       "eas": {

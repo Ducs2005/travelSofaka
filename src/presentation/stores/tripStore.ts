@@ -153,7 +153,7 @@ export const useTripStore = create<TripState>((set, get) => ({
         isActive: true,
         isSynced: false,
         createdAt: currentTrip?.createdAt ?? Date.now(),
-      });
+      };
       const savedTrip = await tripRepository.saveTrip(trip);
       set((state) => ({
         activeTrip: savedTrip,
