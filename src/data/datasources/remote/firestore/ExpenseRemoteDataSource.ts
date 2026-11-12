@@ -2,6 +2,8 @@ import {
   collection,
   getDocs,
   addDoc,
+  setDoc,
+  doc,
   query,
   where,
   orderBy,
@@ -52,6 +54,16 @@ export class ExpenseRemoteDataSource {
       isSynced: true,
       createdAt: Date.now(),
     };
+  }
+
+  /** Ghi đè/tạo mới theo id cục bộ — Sync Engine dùng khi đẩy khoản chi tạo lúc ngoại tuyến */
+  async upsertExpense(expense: ExpenseItem): Promise<void> {
+    const { id, ...rest } = expense;
+    await setDoc(
+      doc(this.col, id),
+      { ...rest, isSynced: true, createdAt: expense.createdAt },
+      { merge: true }
+    );
   }
 }
 

@@ -4,3 +4,4 @@ export * from './activity';
 export * from './destination';
 export * from './expense';
 export * from './post';
+export * from './sync';

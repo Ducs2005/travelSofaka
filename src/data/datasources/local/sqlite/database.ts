@@ -27,4 +27,12 @@ export async function initDatabase(db: SQLite.SQLiteDatabase): Promise<void> {
     ${CREATE_POSTS_CACHE_TABLE}
     ${CREATE_SYNC_QUEUE_TABLE}
   `);
+  await migratePostsCache(db);
+}
+
+/** Nâng cấp CSDL cũ (Sprint 1) — bổ sung cột is_synced cho bảng posts_cache */
+async function migratePostsCache(db: SQLite.SQLiteDatabase): Promise<void> {
+  const columns = await db.getAllAsync<{ name: string }>('PRAGMA table_info(posts_cache);');
+  if (columns.some((column) => column.name === 'is_synced')) return;
+  await db.execAsync('ALTER TABLE posts_cache ADD COLUMN is_synced INTEGER NOT NULL DEFAULT 1;');
 }

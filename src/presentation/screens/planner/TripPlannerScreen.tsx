@@ -50,7 +50,7 @@ export const TripPlannerScreen: React.FC = () => {
     parsedEndDate.setDate(parsedEndDate.getDate() + dayCount - 1);
     updateTrip({
       title: tripTitle.trim(),
-      destinations: destination.split(',').map((item) => item.trim()).filter(Boolean),
+      destinations: destination.split(',').map((item: string) => item.trim()).filter(Boolean),
       budgetTotal: Number(budget.replace(/[\s,]/g, '')),
       startDate: parsedStartDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
       endDate: parsedEndDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),

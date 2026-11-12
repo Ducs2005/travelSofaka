@@ -67,7 +67,8 @@ export const CREATE_POSTS_CACHE_TABLE = `
     likes_count INTEGER NOT NULL DEFAULT 0,
     comments_count INTEGER NOT NULL DEFAULT 0,
     time_ago TEXT NOT NULL,
-    created_at INTEGER NOT NULL
+    created_at INTEGER NOT NULL,
+    is_synced INTEGER NOT NULL DEFAULT 1
   );
 `;
 

@@ -1,51 +1,209 @@
 import { create } from 'zustand';
-import { TravelPost } from '@/domain/entities/post';
+import { CreatePostInput, PostComment, TravelPost } from '@/domain/entities/post';
+import { SyncResult } from '@/domain/entities/sync';
+import {
+  AddCommentUseCase,
+  CreatePostUseCase,
+  GetFeedPostsUseCase,
+  GetPostCommentsUseCase,
+  ToggleLikePostUseCase,
+} from '@/domain/usecases/post/PostUseCases';
+import { PostRepositoryImpl } from '@/data/repositories/PostRepositoryImpl';
+import { syncEngine } from '@/data/datasources/sync';
+import { useAuthStore } from '@/presentation/stores/authStore';
+
+const postRepository = new PostRepositoryImpl();
+const getFeedPosts = new GetFeedPostsUseCase(postRepository);
+const createPost = new CreatePostUseCase(postRepository);
+const toggleLikePost = new ToggleLikePostUseCase(postRepository);
+const getPostComments = new GetPostCommentsUseCase(postRepository);
+const addPostComment = new AddCommentUseCase(postRepository);
+
+/** Tác giả mặc định khi chưa đăng nhập (chế độ xem thử) */
+const DEMO_AUTHOR = {
+  uid: 'user_lam_nguyen',
+  name: 'Tùng Lâm',
+  avatar: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=120',
+};
+
+export function resolveCurrentAuthor() {
+  const user = useAuthStore.getState().user;
+  if (user) {
+    return { uid: user.uid, name: user.displayName, avatar: user.avatarUrl ?? DEMO_AUTHOR.avatar };
+  }
+  return DEMO_AUTHOR;
+}
+
+export interface PublishPostInput {
+  caption: string;
+  destinationTag: string;
+  localImageUri?: string;
+}
 
 interface SocialState {
   posts: TravelPost[];
+  commentsByPost: Record<string, PostComment[]>;
+  likedPostIds: string[];
+  pendingCount: number;
+  isOnline: boolean;
   isLoading: boolean;
+  isRefreshing: boolean;
+  isPublishing: boolean;
+  error: string | null;
 
-  // Actions
-  addPost: (post: TravelPost) => void;
-  likePost: (postId: string) => void;
+  loadFeed: (options?: { silent?: boolean }) => Promise<void>;
+  publishPost: (input: PublishPostInput) => Promise<TravelPost>;
+  toggleLike: (postId: string) => Promise<void>;
+  loadComments: (postId: string) => Promise<void>;
+  addComment: (postId: string, body: string) => Promise<void>;
+  syncPending: () => Promise<SyncResult>;
+  refreshPendingCount: () => Promise<void>;
+  clearError: () => void;
 }
 
-export const useSocialStore = create<SocialState>((set) => ({
-  posts: [
-    {
-      id: 'post_1',
-      authorUid: 'user_minhanh',
-      authorName: 'Minh Anh',
-      authorAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100',
-      destinationTag: '📍 Hoi An Ancient Town',
-      imageUrl: 'https://images.unsplash.com/photo-1559592413-7cec4d0cae2b?w=600',
-      caption: 'Night lantern boat ride with the CS uni squad! Best Cao Lầu & Bánh Mì Phượng 🏮🛶',
-      likesCount: 128,
-      commentsCount: 14,
-      timeAgo: '2h ago',
-      createdAt: Date.now() - 7200000,
-    },
-    {
-      id: 'post_2',
-      authorUid: 'user_baobao',
-      authorName: 'Bảo Bảo',
-      authorAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100',
-      destinationTag: '📍 Da Lat Pine Hills',
-      imageUrl: 'https://images.unsplash.com/photo-1583417319070-4a69db38a482?w=600',
-      caption: 'Chilly morning coffee overlooking the pine forest ☕🌲',
-      likesCount: 94,
-      commentsCount: 8,
-      timeAgo: '1d ago',
-      createdAt: Date.now() - 86400000,
-    },
-  ],
+export const useSocialStore = create<SocialState>((set, get) => ({
+  posts: [],
+  commentsByPost: {},
+  likedPostIds: [],
+  pendingCount: 0,
+  isOnline: true,
   isLoading: false,
+  isRefreshing: false,
+  isPublishing: false,
+  error: null,
 
-  addPost: (post) => set((state) => ({ posts: [post, ...state.posts] })),
-  likePost: (postId) =>
-    set((state) => ({
-      posts: state.posts.map((p) =>
-        p.id === postId ? { ...p, likesCount: p.likesCount + 1 } : p
+  loadFeed: async (options) => {
+    const silent = options?.silent === true;
+    set(silent ? { isRefreshing: true } : { isLoading: true, error: null });
+    try {
+      const [posts, pendingCount] = await Promise.all([
+        getFeedPosts.execute(),
+        postRepository.countPendingPosts(),
+      ]);
+      set({
+        posts,
+        pendingCount,
+        isOnline: syncEngine.isOnline(),
+        isLoading: false,
+        isRefreshing: false,
+      });
+    } catch (error) {
+      set({
+        error: error instanceof Error ? error.message : 'Không tải được bảng tin.',
+        isLoading: false,
+        isRefreshing: false,
+      });
+    }
+  },
+
+  publishPost: async (input) => {
+    const author = resolveCurrentAuthor();
+    const payload: CreatePostInput = {
+      authorUid: author.uid,
+      authorName: author.name,
+      authorAvatar: author.avatar,
+      destinationTag: input.destinationTag,
+      caption: input.caption,
+      localImageUri: input.localImageUri,
+    };
+
+    set({ isPublishing: true, error: null });
+    try {
+      const published = await createPost.execute(payload);
+      set((state) => ({
+        posts: [published, ...state.posts.filter((post) => post.id !== published.id)],
+        isPublishing: false,
+      }));
+      await get().refreshPendingCount();
+      return published;
+    } catch (error) {
+      set({
+        isPublishing: false,
+        error: error instanceof Error ? error.message : 'Không đăng được bài viết.',
+      });
+      throw error;
+    }
+  },
+
+  toggleLike: async (postId) => {
+    const { posts, likedPostIds } = get();
+    if (!posts.some((post) => post.id === postId)) return;
+
+    const wasLiked = likedPostIds.includes(postId);
+    set({
+      likedPostIds: wasLiked
+        ? likedPostIds.filter((id) => id !== postId)
+        : [...likedPostIds, postId],
+      posts: posts.map((post) =>
+        post.id === postId
+          ? { ...post, likesCount: Math.max(0, post.likesCount + (wasLiked ? -1 : 1)) }
+          : post
       ),
-    })),
+    });
+
+    try {
+      await toggleLikePost.execute(postId, wasLiked);
+      await get().refreshPendingCount();
+    } catch (error) {
+      set({ error: error instanceof Error ? error.message : 'Không cập nhật được lượt thích.' });
+    }
+  },
+
+  loadComments: async (postId) => {
+    try {
+      const comments = await getPostComments.execute(postId);
+      set((state) => ({
+        commentsByPost: { ...state.commentsByPost, [postId]: comments },
+      }));
+    } catch (_error) {
+      set({ error: 'Cần kết nối mạng để tải bình luận.' });
+    }
+  },
+
+  addComment: async (postId, body) => {
+    const author = resolveCurrentAuthor();
+    try {
+      const comment = await addPostComment.execute(postId, {
+        authorUid: author.uid,
+        authorName: author.name,
+        authorAvatar: author.avatar,
+        body,
+      });
+      set((state) => ({
+        commentsByPost: {
+          ...state.commentsByPost,
+          [postId]: [...(state.commentsByPost[postId] ?? []), comment],
+        },
+        posts: state.posts.map((post) =>
+          post.id === postId ? { ...post, commentsCount: post.commentsCount + 1 } : post
+        ),
+      }));
+    } catch (_error) {
+      set({ error: 'Cần kết nối mạng để bình luận.' });
+    }
+  },
+
+  syncPending: async () => {
+    const result = await syncEngine.syncNow();
+    set({ pendingCount: result.remaining, isOnline: syncEngine.isOnline() });
+    if (result.pushed > 0) {
+      await get().loadFeed({ silent: true });
+    }
+    return result;
+  },
+
+  refreshPendingCount: async () => {
+    const pendingCount = await postRepository.countPendingPosts();
+    set({ pendingCount });
+  },
+
+  clearError: () => set({ error: null }),
 }));
+
+// Sync Engine báo kết quả mỗi lượt đồng bộ (kể cả khi tự động chạy lúc có mạng trở lại)
+syncEngine.subscribe((result) => {
+  useSocialStore.setState({ pendingCount: result.remaining });
+  if (result.pushed > 0) {
+    void useSocialStore.getState().loadFeed({ silent: true });
+  }
+});
